@@ -1,0 +1,27 @@
+# .github/workflows/ci.yml
+
+name: aimm-earthly-build
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      FORCE_COLOR: 1
+    steps:
+    - uses: earthly/actions-setup@v1
+      with:
+        version: v0.8.0
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive' # Fetch all submodules
+        fetch-depth: 0          # Fetch all history for all branches and tags
+    - name: Docker Login
+      run: docker login --username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN"
+    - name: Run build
+      run: earthly --ci --push +build

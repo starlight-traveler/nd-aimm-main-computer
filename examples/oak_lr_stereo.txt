@@ -1,0 +1,313 @@
+#include <iostream>
+#include <memory>
+#include <opencv2/opencv.hpp>
+#include "depthai/depthai.hpp"
+#include "quill/Backend.h"
+#include "quill/Frontend.h"
+#include "quill/LogMacros.h"
+#include "quill/Logger.h"
+#include "quill/sinks/ConsoleSink.h"
+
+#include <string>
+#include <utility>
+
+static constexpr float stepSize = 0.05f;
+
+static std::atomic<bool> newConfig{false};
+
+int main()
+{
+
+    // Start the backend thread
+    quill::BackendOptions backend_options;
+    quill::Backend::start(backend_options);
+
+    // Frontend
+    quill::ConsoleColours custom_console_colours;
+    custom_console_colours.set_default_colours();
+    custom_console_colours.set_colour(quill::LogLevel::Info, quill::ConsoleColours::blue); // overwrite the colour for INFO
+    custom_console_colours.set_colour(quill::LogLevel::Warning, quill::ConsoleColours::yellow); // overwrite the colour for INFO
+    custom_console_colours.set_colour(quill::LogLevel::Error, quill::ConsoleColours::red); // overwrite the colour for INFO
+
+    // Create the sink
+    auto console_sink =
+        quill::Frontend::create_or_get_sink<quill::ConsoleSink>("sink_id_1", custom_console_colours);
+
+    quill::Logger* logger = quill::Frontend::create_or_get_logger("root", std::move(console_sink));
+
+    // Change the LogLevel to print everything
+    logger->set_log_level(quill::LogLevel::TraceL3);
+
+    LOG_INFO(logger, "System successfully started!");
+
+    using namespace std;
+
+    // Flag setup for stereo depth calculations
+    bool extended_disparity = true; // Use extended disparity range (increases resolution of disparity map at the cost of performance)
+    bool subpixel = true;           // Enable sub-pixel accuracy in disparity map
+    bool lr_check = false;           // Enable left-right consistency check
+    bool enabledRectified = false;  // Enable rectified images (unused in this code)
+    bool newConfig = false;         // Flag to indicate a new configuration (unused in this code)
+
+    auto topLeft = dai::Point2f(0.4, 0.4);
+    auto bottomRight = dai::Point2f(0.6, 0.6);
+
+    // Create a pipeline object that coordinates the flow of data between nodes
+    dai::Pipeline pipeline;
+
+    // Create camera nodes for capturing images from left, center, and right cameras
+    auto left = pipeline.create<dai::node::ColorCamera>();
+    auto center = pipeline.create<dai::node::ColorCamera>();
+    auto right = pipeline.create<dai::node::ColorCamera>();
+
+    // Create stereo depth nodes for calculating depth maps from pairs of cameras
+    // auto LC_depth = pipeline.create<dai::node::StereoDepth>();
+    auto LR_depth = pipeline.create<dai::node::StereoDepth>();
+    // auto CR_depth = pipeline.create<dai::node::StereoDepth>();
+
+    // Stereo Calculator Pipeline
+    auto spatialDataCalculator = pipeline.create<dai::node::SpatialLocationCalculator>();
+
+    // Create output nodes to send the disparity maps to the host via USB
+    // auto xout_LC = pipeline.create<dai::node::XLinkOut>();
+    auto xout_LR = pipeline.create<dai::node::XLinkOut>();
+    // auto xout_CR = pipeline.create<dai::node::XLinkOut>();
+
+    // Create an input node for receiving spatial location configuration from the host (unused in this code)
+    auto xinSpatialCalcConfig = pipeline.create<dai::node::XLinkIn>();
+    auto xoutSpatialData = pipeline.create<dai::node::XLinkOut>();
+    xoutSpatialData->setStreamName("spatialData");
+
+    // Set the output stream names for linking with external applications or other parts of the application
+    // xout_LC->setStreamName("disparity_LC");
+    xout_LR->setStreamName("depth");
+    // xout_CR->setStreamName("disparity_CR");
+    xinSpatialCalcConfig->setStreamName("spatialCalcConfig");
+
+    // Configure the resolution and camera settings for each ColorCamera node
+    left->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
+    left->setCamera("left");
+    left->setIspScale(2, 3);
+
+    center->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
+    center->setCamera("center");
+    center->setIspScale(2, 3);
+
+    right->setResolution(dai::ColorCameraProperties::SensorResolution::THE_1080_P);
+    right->setCamera("right");
+    right->setIspScale(2, 3);
+
+    // Lambda function to configure stereo depth settings consistently across different nodes
+    auto setupStereoDepth = [&](std::shared_ptr<dai::node::StereoDepth> node)
+    {
+        node->setDefaultProfilePreset(dai::node::StereoDepth::PresetMode::HIGH_DENSITY);
+        node->initialConfig.setMedianFilter(dai::MedianFilter::MEDIAN_OFF);
+        node->setLeftRightCheck(lr_check);
+        node->setExtendedDisparity(extended_disparity);
+        node->setSubpixel(subpixel);
+    };
+
+    // Apply stereo depth configuration to each stereo depth node
+    // setupStereoDepth(LC_depth);
+    setupStereoDepth(LR_depth);
+    // setupStereoDepth(CR_depth);
+
+    // Linking camera outputs to stereo depth inputs and stereo depth outputs to XLinkOut inputs
+    // left->isp.link(LC_depth->left);
+    // center->isp.link(LC_depth->right);
+    // LC_depth->disparity.link(xout_LC->input);
+
+    left->isp.link(LR_depth->left);
+    right->isp.link(LR_depth->right);
+    LR_depth->disparity.link(xout_LR->input);
+
+    // center->isp.link(CR_depth->left);
+    // right->isp.link(CR_depth->right);
+    // CR_depth->disparity.link(xout_CR->input);
+
+    // Config for spatial location calculator
+    auto config = dai::SpatialLocationCalculatorConfigData();
+    config.depthThresholds.lowerThreshold = 100;
+    config.depthThresholds.upperThreshold = 10000;
+    auto calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MEDIAN;
+    config.roi = dai::Rect(topLeft, bottomRight);
+
+    spatialDataCalculator->inputConfig.setWaitForMessage(false);
+    spatialDataCalculator->initialConfig.addROI(config);
+
+    spatialDataCalculator->passthroughDepth.link(xout_LR->input);
+    LR_depth->depth.link(spatialDataCalculator->inputDepth); // Link depth output to SpatialLocationCalculator's depth input
+
+    spatialDataCalculator->out.link(xoutSpatialData->input);
+    xinSpatialCalcConfig->out.link(spatialDataCalculator->inputConfig); // Send configuration data to SpatialLocationCalculator
+
+    // Initialize the device with the pipeline and set the USB speed
+    dai::Device device(pipeline, dai::UsbSpeed::SUPER);
+
+    // LOG_DEBUG(logger, "Connected cameras: {}", device.getConnectedCameraFeatures());
+    // LOG_DEBUG(logger, "USB speed: {}", device.getUsbSpeed());
+
+    // Check and display bootloader version if available
+    if (device.getBootloaderVersion())
+    {
+        LOG_DEBUG(logger, "Bootloader version: {}", device.getBootloaderVersion()->toString());
+    }
+
+    LOG_DEBUG(logger, "Device name: {} Product name: {}", device.getDeviceName(), device.getProductName());
+
+    auto depthQueue = device.getOutputQueue("depth", 8, false);
+    auto spatialCalcQueue = device.getOutputQueue("spatialData", 8, false);
+    auto spatialCalcConfigInQueue = device.getInputQueue("spatialCalcConfig");
+
+    auto color = cv::Scalar(255, 255, 255);
+
+    std::cout << "Use WASD keys to move ROI!" << std::endl;
+
+    // Main loop to process and display incoming frames
+        while (true) {
+
+            LOG_TRACE_L1(logger, "Stopped here 1!");
+
+            auto inDepthPtr = depthQueue->tryGet<dai::ImgFrame>();
+
+            if (inDepthPtr)
+            {
+                LOG_DEBUG(logger, "Depth frame retrieved successfully.");
+                cv::Mat depthFrame = inDepthPtr->getFrame(); // depthFrame values are in millimeters
+                // Further processing here...
+
+                LOG_TRACE_L1(logger, "Stopped here 2!");
+
+                cv::Mat depthFrameColor;
+
+                LOG_TRACE_L1(logger, "Stopped here 3!");
+
+                cv::normalize(depthFrame, depthFrameColor, 255, 0, cv::NORM_INF, CV_8UC1);
+                cv::equalizeHist(depthFrameColor, depthFrameColor);
+                cv::applyColorMap(depthFrameColor, depthFrameColor, cv::COLORMAP_HOT);
+
+                LOG_DEBUG(logger, "Attempting to retrieve spatial data...");
+                auto spatialDataPtr = spatialCalcQueue->tryGet<dai::SpatialLocationCalculatorData>();
+
+                if (spatialDataPtr)
+                {
+                    auto spatialData = spatialDataPtr->getSpatialLocations();
+                    LOG_DEBUG(logger, "Spatial data retrieved successfully. Processing data...");
+
+                    for (auto depthData : spatialData)
+                    {
+                        std::cout << "Hello World 2" << std::endl;
+                        auto roi = depthData.config.roi;
+                        roi = roi.denormalize(depthFrameColor.cols, depthFrameColor.rows);
+                        auto xmin = (int)roi.topLeft().x;
+                        auto ymin = (int)roi.topLeft().y;
+                        auto xmax = (int)roi.bottomRight().x;
+                        auto ymax = (int)roi.bottomRight().y;
+
+                        auto depthMin = depthData.depthMin;
+                        auto depthMax = depthData.depthMax;
+
+                        cv::rectangle(depthFrameColor, cv::Rect(cv::Point(xmin, ymin), cv::Point(xmax, ymax)), color, cv::FONT_HERSHEY_SIMPLEX);
+                        std::stringstream depthX;
+                        depthX << "X: " << (int)depthData.spatialCoordinates.x << " mm";
+                        cv::putText(depthFrameColor, depthX.str(), cv::Point(xmin + 10, ymin + 20), cv::FONT_HERSHEY_TRIPLEX, 0.5, color);
+                        std::stringstream depthY;
+                        depthY << "Y: " << (int)depthData.spatialCoordinates.y << " mm";
+                        cv::putText(depthFrameColor, depthY.str(), cv::Point(xmin + 10, ymin + 35), cv::FONT_HERSHEY_TRIPLEX, 0.5, color);
+                        std::stringstream depthZ;
+                        depthZ << "Z: " << (int)depthData.spatialCoordinates.z << " mm";
+                        cv::putText(depthFrameColor, depthZ.str(), cv::Point(xmin + 10, ymin + 50), cv::FONT_HERSHEY_TRIPLEX, 0.5, color);
+                    }
+
+                    // Show the frame
+                    cv::imshow("depth", depthFrameColor);
+
+                    int key = cv::waitKey(1);
+                    switch (key)
+                    {
+                    case 'q':
+                        return 0;
+                    case 'w':
+                        if (topLeft.y - stepSize >= 0)
+                        {
+                            topLeft.y -= stepSize;
+                            bottomRight.y -= stepSize;
+                            newConfig = true;
+                        }
+                        break;
+                    case 'a':
+                        if (topLeft.x - stepSize >= 0)
+                        {
+                            topLeft.x -= stepSize;
+                            bottomRight.x -= stepSize;
+                            newConfig = true;
+                        }
+                        break;
+                    case 's':
+                        if (bottomRight.y + stepSize <= 1)
+                        {
+                            topLeft.y += stepSize;
+                            bottomRight.y += stepSize;
+                            newConfig = true;
+                        }
+                        break;
+                    case 'd':
+                        if (bottomRight.x + stepSize <= 1)
+                        {
+                            topLeft.x += stepSize;
+                            bottomRight.x += stepSize;
+                            newConfig = true;
+                        }
+                        break;
+                    case '1':
+                        calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MEAN;
+                        newConfig = true;
+                        std::cout << "Switching calculation algorithm to MEAN!" << std::endl;
+                        break;
+                    case '2':
+                        calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MIN;
+                        newConfig = true;
+                        std::cout << "Switching calculation algorithm to MIN!" << std::endl;
+                        break;
+                    case '3':
+                        calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MAX;
+                        newConfig = true;
+                        std::cout << "Switching calculation algorithm to MAX!" << std::endl;
+                        break;
+                    case '4':
+                        calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MODE;
+                        newConfig = true;
+                        std::cout << "Switching calculation algorithm to MODE!" << std::endl;
+                        break;
+                    case '5':
+                        calculationAlgorithm = dai::SpatialLocationCalculatorAlgorithm::MEDIAN;
+                        newConfig = true;
+                        std::cout << "Switching calculation algorithm to MEDIAN!" << std::endl;
+                        break;
+                    default:
+                        break;
+                    }
+
+                    if (newConfig)
+                    {
+                        config.roi = dai::Rect(topLeft, bottomRight);
+                        config.calculationAlgorithm = calculationAlgorithm;
+                        dai::SpatialLocationCalculatorConfig cfg;
+                        cfg.addROI(config);
+                        spatialCalcConfigInQueue->send(cfg);
+                        newConfig = false;
+                    }
+                } else {
+
+                    LOG_ERROR(logger, "No spatial data received. Check pipeline configuration and ensure depth data is being sent.");
+                } 
+        }
+        else
+        {
+            LOG_ERROR(logger, "Depth frame not available at this time.");
+        }
+        }
+        return 0;
+    }
+
+

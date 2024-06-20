@@ -1,0 +1,53 @@
+name: publish-to-github-pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-book:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+          cache: "pip"
+      - name: Install Dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install .[docs]; fi  # Install optional docs dependencies
+        working-directory: docs
+      - name: List installed packages
+        run: pip list
+      - name: Build Jupyter Book Documentation
+        run: jupyter-book build . --config docs/_config.yml --toc docs/_toc.yml
+        working-directory: docs
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && job.status == 'success'
+        with:
+          path: "docs/_build/html"  # Specify the correct path to upload
+
+  deploy-book:
+    needs: build-book
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: "github-pages"  # Ensure this matches the uploaded artifact
+          path: "docs"  # Ensure the path matches the GitHub Pages root

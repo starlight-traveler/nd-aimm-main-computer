@@ -1,0 +1,12 @@
+[submodule "lib/depthai-core"]
+	path = lib/depthai-core
+	url = https://github.com/luxonis/depthai-core.git
+[submodule "lib/quill"]
+	path = lib/quill
+	url = https://github.com/odygrd/quill.git
+[submodule "docs/doxygen-awesome-css"]
+	path = docs/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git
+[submodule "lib/flatbuffers"]
+	path = lib/flatbuffers
+	url = https://github.com/google/flatbuffers.git
