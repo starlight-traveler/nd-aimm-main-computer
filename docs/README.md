@@ -32,7 +32,6 @@ Inspired by literate programming, maintained by the Notre Dame Artifical Intelli
   >
 
 ```{caution}
-
 Your pull request to merge code will be denied if anything is elevated outside of the directory, you must discuss with the project leads beforehand.
 ```
 

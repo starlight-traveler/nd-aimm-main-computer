@@ -5,8 +5,8 @@ parts:
   - caption: Getting Started
     numbered: True
     chapters:
-      - file: notebooks/world-bank-api.ipynb
-      - file: notebooks/world-bank-package.ipynb
+      - file: notebooks/getting-started.ipynb
+      - file: notebooks/things-to-know.ipynb
       - file: notebooks/nasa-apod.ipynb
       - file: notebooks/bibliography.ipynb
   - caption: Gallery
