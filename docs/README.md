@@ -31,9 +31,9 @@ Inspired by literate programming, maintained by the Notre Dame Artifical Intelli
   > All applications of programming done in the CXX standard will occur in the src/ directory and the exectuable will build from there. Under no circumstance should code be elevated out of the **src/** Usage
   >
 
-```{caution}
+```{important}
 
-Your pull request to merge code will be denied if anything is elevated outside of the directory, you must discuss the project leads beforehand.
+Your pull request to merge code will be denied if anything is elevated outside of the directory, you must discuss with the project leads beforehand.
 ```
 
 
