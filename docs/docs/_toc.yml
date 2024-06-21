@@ -2,7 +2,7 @@ format: jb-book
 root: README
 
 parts:
-  - caption: Examples
+  - caption: Getting Started
     numbered: True
     chapters:
       - file: notebooks/world-bank-api.ipynb

@@ -4,7 +4,7 @@
 
 This is the home of all the documentation for the Main LPV computer. Please review the below and go to ***Getting Started*** in order to access the programming suite.
 
-Inspired by literate programming, maintained by the Development Data Group, and built with a focus on trunk-based development and industry best practices, this NDAIMM project contains comprehensive documentation, automated testing, CI/CD, and secure coding practices. Some key things to review project management wise:
+Inspired by literate programming, maintained by the Notre Dame Artifical Intelligence team, and built with a focus on trunk-based development and industry best practices, this NDAIMM project contains comprehensive documentation, automated testing, CI/CD, and secure coding practices. Some key things to review project management wise:
 
 - [**README**](README), [**CODE_OF_CONDUCT**](docs/CODE_OF_CONDUCT.md), [**CONTRIBUTING**](docs/CONTRIBUTING.md)
 
@@ -30,6 +30,12 @@ Inspired by literate programming, maintained by the Development Data Group, and 
 
   > All applications of programming done in the CXX standard will occur in the src/ directory and the exectuable will build from there. Under no circumstance should code be elevated out of the **src/** Usage
   >
+
+```{caution}
+
+Your pull request to merge code will be denied if anything is elevated outside of the directory, you must discuss the project leads beforehand.
+```
+
 
 ### Code of Conduct
 
