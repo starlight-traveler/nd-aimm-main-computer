@@ -1,5 +1,5 @@
 #include "serializer_factory.h"
-#include "monster_serializer.h"
+#include "example_serializer.h"
 
 SerialAbstract *SerializerFactory::GetSerializer(ObjectType type)
 {

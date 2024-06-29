@@ -363,7 +363,7 @@ if [[ "$COMPILE_PROJECT" == true ]]; then
   if [[ "$FORCE_REBUILD" == true ]]; then
     cmake --build build --clean-first --parallel $NUM_CORES "$@"
   else
-    cmake --build build --verbose --parallel $NUM_CORES "$@"
+    cmake --build build --parallel $NUM_CORES "$@"
   fi
 fi
 

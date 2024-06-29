@@ -10,6 +10,8 @@ cmake_policy(SET CMP0063 NEW) # Honor visibility properties for all target types
 cmake_policy(SET CMP0077 NEW) # option() honors normal variables.
 cmake_policy(SET CMP0120 OLD) # The WriteCompilerDetectionHeader module is removed.
 
+set(CMAKE_BUILD_TYPE Debug)
+
 # Add message color headers
 
 if(NOT WIN32)
@@ -168,7 +170,7 @@ add_executable(${PROJECT_NAME}
     src/peripherals.cpp
     src/pipeline/inference.cpp
     src/serialization/serialFactory.cpp
-    src/serialization/serializerMonster.cpp
+    src/serialization/serializerExample.cpp
 )
 
 # Set include directories for the target. 
@@ -202,7 +204,7 @@ endif()
 # Set default build type to Release if not specified. 
 # Change this to Debug or another type if needed.
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 # Define the source path of the models

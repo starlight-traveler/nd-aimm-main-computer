@@ -168,7 +168,7 @@ void Inference::loadOnnxNetwork()
     }
     else
     {
-        std::cout << "\nRunning on CPU" << std::endl;
+        // std::cout << "\nRunning on CPU" << std::endl;
         net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
         net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     }

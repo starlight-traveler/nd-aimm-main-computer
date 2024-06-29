@@ -18,7 +18,7 @@ Note: All functions must have applicable documentation for future use.
 
 This utilizes a thread pool model, trunk based development model.
 
-Use it accordingly.
+Use it well.
 
 */
 
@@ -32,8 +32,12 @@ Use it accordingly.
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <atomic>
+#include <chrono>
+#include <thread>
+#include <iostream>
 #include "flatbuffers/flatbuffers.h"
-
+#include "quill/LogMacros.h"
 
 #include "version.h"
 #include "logger.h"
@@ -42,9 +46,41 @@ Use it accordingly.
 #include "peripherals.h"
 #include "inference.h"
 #include "serializer_factory.h"
-#include "monster_generated.h"
+#include "example_generated.h"
+#include "thread_safe_queue.h"
 
 using namespace MyGame::Sample;
+
+/**
+ * @brief Function to increment and log values in a loop
+ */
+void log_increment(std::atomic<int> &x, quill::Logger *logger)
+{
+  while (true)
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    int val = ++x;
+    LOG_INFO(logger, "Number: {}", val);
+  }
+}
+
+void run_with_retry(quill::Logger *logger, ThreadSafeQueue<cv::Mat> &displayQueue)
+{
+  while (true)
+  {
+    try
+    {
+      orchestrationThreadLRCamera(logger, displayQueue);
+      break; // Exit loop if setup_pipeline succeeds
+    }
+    catch (...)
+    {
+      // LOG_ERROR(logger, "Caught runtime error: {}", e.what());
+      LOG_INFO(logger, "Retrying in 5 seconds...");
+      std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+  }
+}
 
 /**
  * 
@@ -72,77 +108,69 @@ int main()
 
     flatbuffers::FlatBufferBuilder builder;
     SerialAbstract* serializer = SerializerFactory::GetSerializer(ObjectType::Monster);
+
     LOG_TRACE_L1(logger, "Sucessfully serialized monster Object.");
+
     if (serializer) {
         serializer->Serialize(builder);
         // Send buffer over UDP, handle network communication, etc.
         delete serializer;
     }
 
-
     // Get access to the root:
     auto monster = GetMonster(builder.GetBufferPointer());
 
-    // Get and test some scalar types from the FlatBuffer.
-    assert(monster->hp() == 80);
-    assert(monster->mana() == 150); // default
-    assert(monster->name()->str() == "MyMonster");
+    /**
+     * @brief Build all system peripheral addresses to contact
+     *
+     * Initalizes a range of system IPs that connect to outside devices for
+     * specific system control. Returns a map of devices.
+     */
+    std::map<std::string, UDPClient> clients = buildPeripherals(logger);
 
-    // Get and test a field of the FlatBuffer's `struct`.
-    auto pos = monster->pos();
-    assert(pos);
-    assert(pos->z() == 3.0f);
-    (void)pos;
+    UDPClient &eth0_client = clients.at("eth0");
+    eth0_client.sendMessageAsyncSerialized(builder, logger);
 
-    // Get a test an element from the `inventory` FlatBuffer's `vector`.
-    auto inv = monster->inventory();
-    assert(inv);
-    assert(inv->Get(9) == 9);
-    (void)inv;
+    ThreadSafeQueue<cv::Mat> displayQueue;
 
-    // Get and test the `weapons` FlatBuffers's `vector`.
-    std::string expected_weapon_names[] = {"Sword", "Axe"};
-    short expected_weapon_damages[] = {3, 5};
-    auto weps = monster->weapons();
-    for (unsigned int i = 0; i < weps->size(); i++)
+    /**
+     * @brief Start the camera pipeline
+     *
+     * Calls the setup_pipeline function to configure and start the camera
+     * pipeline process. This function is expected to handle all aspects of the
+     * camera setup including stream configuration.
+     */
+    std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue)); // Pass the address of logger
+
+    // setup_pipeline(logger);
+
+    // Use atomic for synchronization across threads
+    std::atomic<int> x(0);
+
+    // Start the logging and incrementing loop in a separate thread
+    std::thread log_thread(log_increment, std::ref(x), logger);
+
+    // Wait for the camera thread to finish, if it ever does
+    camera_thread.detach();
+
+    // The log thread will run indefinitely unless you provide a mechanism to stop it
+    log_thread.join();
+
+    // Main thread loop for display
+    while (true)
     {
-      assert(weps->Get(i)->name()->str() == expected_weapon_names[i]);
-      assert(weps->Get(i)->damage() == expected_weapon_damages[i]);
+      cv::Mat frame;
+      if (displayQueue.tryPop(frame))
+      {
+        cv::imshow("Display Window", frame);
+        if (cv::waitKey(1) >= 0)
+          break;
+      } else {
+        LOG_ERROR(logger, "Nothing to display.");
+      }
+
+      
     }
-    (void)expected_weapon_names;
-    (void)expected_weapon_damages;
 
-    // Get and test the `Equipment` union (`equipped` field).
-    assert(monster->equipped_type() == Equipment_Weapon);
-    auto equipped = static_cast<const Weapon *>(monster->equipped());
-    assert(equipped->name()->str() == "Axe");
-    assert(equipped->damage() == 5);
-    (void)equipped;
-
-    printf("The FlatBuffer was successfully created and verified!\n");
-
-  // ---------------
-
-  /**
-   * @brief Build all system peripheral addresses to contact
-   * 
-   * Initalizes a range of system IPs that connect to outside devices for
-   * specific system control. Returns a map of devices.
-   */ 
-  std::map<std::string, UDPClient> clients = buildPeripherals(logger);
-
-  UDPClient &eth0_client = clients.at("eth0");
-  eth0_client.sendMessageAsync("Hello, eth0!", 0, 0, logger);
-
-
-  /**
-   * @brief Start the camera pipeline
-   *
-   * Calls the setup_pipeline function to configure and start the camera
-   * pipeline process. This function is expected to handle all aspects of the
-   * camera setup including stream configuration.
-   */
-  setup_pipeline(logger);
-
-  return 0;
+    return 0;
 }

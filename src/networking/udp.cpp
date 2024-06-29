@@ -1,13 +1,15 @@
 #include "udp.h"
 #include <cstring>
+#include <cerrno>  // For errno
+#include <cstring> // For strerror
 
 UDPClient::UDPClient(std::string name, std::string ip, int port, quill::Logger *logger) : name(name), ip_address(ip), port(port)
 {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
     {
-        LOG_ERROR(logger, "Socket creation failed!");
-        throw std::runtime_error("Socket creation failed");
+        LOG_ERROR(logger, "Socket creation failed: {}", strerror(errno));
+        throw std::runtime_error("Socket creation failed: " + std::string(strerror(errno)));
     }
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
@@ -16,7 +18,8 @@ UDPClient::UDPClient(std::string name, std::string ip, int port, quill::Logger *
 
 UDPClient::~UDPClient()
 {
-    close(sockfd);
+    std::cerr << "Closed Socket! " << std::endl;
+
 }
 
 uint16_t UDPClient::calculateCRC(const std::string &data)
@@ -74,7 +77,7 @@ void UDPClient::sendMessageAsync(const std::string &message, uint8_t responseFla
                                                               {
         ssize_t sent_bytes = sendto(sockfd, buffer.data(), buffer.size(), 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
         if (sent_bytes < 0) {
-            LOG_ERROR(logger, "Failed to send message asynchronously to {} ({})", name, ip_address);
+            LOG_ERROR(logger, "Failed to send message asynchronously to {} ({}): {}", name, ip_address, strerror(errno));
         } else {
             LOG_TRACE_L1(logger, "Asynchronously sent message to {} ({})", name, ip_address);
         } }));
@@ -89,9 +92,9 @@ void UDPClient::sendMessageAsyncSerialized(const flatbuffers::FlatBufferBuilder 
                                                               {
         ssize_t sent_bytes = sendto(sockfd, buffer, size, 0, (const struct sockaddr *)&servaddr, sizeof(servaddr));
         if (sent_bytes < 0) {
-            LOG_ERROR(logger, "Failed to send message asynchronously to {} ({})", name, ip_address);
+            LOG_ERROR(logger, "Failed to send serialized message asynchronously to {} ({}): {}", name, ip_address, strerror(errno));
         } else {
-            LOG_TRACE_L1(logger, "Asynchronously sent message to {} ({})", name, ip_address);
+            LOG_TRACE_L1(logger, "Asynchronously sent serialized message to {} ({})", name, ip_address);
         } }));
     futures.push_back(std::move(fut));
 }
