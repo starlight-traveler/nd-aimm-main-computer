@@ -143,7 +143,7 @@ std::shared_ptr<dai::node::ColorCamera> setupCamera(dai::Pipeline &pipeline, dai
         return camera;
     } else {
         auto camera = pipeline.create<dai::node::ColorCamera>();
-        camera->setPreviewSize(300, 300);
+        camera->setPreviewSize(640, 320);
         camera->setInterleaved(false);
         camera->setBoardSocket(socket);
         camera->setColorOrder(dai::ColorCameraProperties::ColorOrder::RGB);
@@ -227,15 +227,15 @@ void processFrames(std::shared_ptr<dai::DataOutputQueue> depthQueue, std::shared
 
         if (spatialDataPtr)
         {
-            annotateDepthFrame(depthFrameColor, spatialDataPtr);
+            // annotateDepthFrame(depthFrameColor, spatialDataPtr);
             cv::Mat frame = inRgb->getCvFrame();
-            processRgbFrame(frame, inRgb, inf, logger);
+            processRgbFrame(frame, inRgb, inf, depthFrameColor, spatialDataPtr, logger);
 
             float scale = 0.8;
             cv::resize(frame, frame, cv::Size(frame.cols * scale, frame.rows * scale));
 
+            // LOG_TRACE_L2(logger, "Pushing frame into queue!");
 
-            LOG_TRACE_L2(logger, "Pushing frame into queue!");
             // Push frames to display in the main thread
             displayQueue.push(frame);
 
@@ -252,12 +252,12 @@ cv::Mat processDepthFrame(std::shared_ptr<dai::ImgFrame> inDepthPtr)
 {
     cv::Mat depthFrame = inDepthPtr->getFrame(); // depthFrame values are in millimeters
 
-    cv::Mat depthFrameColor;
-    cv::normalize(depthFrame, depthFrameColor, 255, 0, cv::NORM_INF, CV_8UC1);
-    cv::equalizeHist(depthFrameColor, depthFrameColor);
-    cv::applyColorMap(depthFrameColor, depthFrameColor, cv::COLORMAP_HOT);
+    // cv::Mat depthFrameColor;
+    // cv::normalize(depthFrame, depthFrameColor, 255, 0, cv::NORM_INF, CV_8UC1);
+    // cv::equalizeHist(depthFrameColor, depthFrameColor);
+    // cv::applyColorMap(depthFrameColor, depthFrameColor, cv::COLORMAP_HOT);
 
-    return depthFrameColor;
+    return depthFrame;
 }
 
 void annotateDepthFrame(cv::Mat &depthFrameColor, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr)
@@ -291,7 +291,7 @@ void annotateDepthFrame(cv::Mat &depthFrameColor, std::shared_ptr<dai::SpatialLo
     }
 }
 
-void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Inference inf, quill::Logger *logger)
+void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Inference &inf, const cv::Mat &depthFrame, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr, quill::Logger *logger)
 {
     std::vector<Detection> output = inf.runInference(frame);
     int detections = output.size();
@@ -302,11 +302,14 @@ void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Infer
         cv::Rect box = detection.box;
         cv::Scalar color = detection.color;
 
-        // Detection box
+        // Draw detection box
         cv::rectangle(frame, box, color, 2);
 
+        // Get depth for the bounding box
+        float depth = getDepthFromBox(box, depthFrame, frame, spatialDataPtr, logger);
+
         // Detection box text
-        std::string classString = detection.className + ' ' + std::to_string(detection.confidence).substr(0, 4);
+        std::string classString = detection.className + ' ' + std::to_string(detection.confidence).substr(0, 4) + " Depth: " + std::to_string(depth);
         cv::Size textSize = cv::getTextSize(classString, cv::FONT_HERSHEY_DUPLEX, 1, 2, 0);
         cv::Rect textBox(box.x, box.y - 40, textSize.width + 10, textSize.height + 20);
 
@@ -314,6 +317,89 @@ void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Infer
         cv::putText(frame, classString, cv::Point(box.x + 5, box.y - 10), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0, 0, 0), 2, 0);
     }
 }
+
+float getDepthFromBox(const cv::Rect &box, const cv::Mat &depthFrame, const cv::Mat &frame, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr, quill::Logger *logger)
+{
+    // Calculate scaling ratios
+    float scaleX = static_cast<float>(depthFrame.cols) / frame.cols;
+    float scaleY = static_cast<float>(depthFrame.rows) / frame.rows;
+
+    // Translate bounding box to depth frame coordinates
+    cv::Rect depthBox;
+    depthBox.x = static_cast<int>(box.x * scaleX);
+    depthBox.y = static_cast<int>(box.y * scaleY);
+    depthBox.width = static_cast<int>(box.width * scaleX);
+    depthBox.height = static_cast<int>(box.height * scaleY);
+
+    // Ensure the box is within frame boundaries
+    depthBox.x = std::max(depthBox.x, 0);
+    depthBox.y = std::max(depthBox.y, 0);
+    depthBox.width = std::min(depthBox.width, depthFrame.cols - depthBox.x);
+    depthBox.height = std::min(depthBox.height, depthFrame.rows - depthBox.y);
+
+    // Compute the median depth within the bounding box to avoid the effect of outliers
+    std::vector<uint16_t> depths;
+    depths.reserve(depthBox.width * depthBox.height);
+
+    for (int y = depthBox.y; y < depthBox.y + depthBox.height; ++y) {
+        for (int x = depthBox.x; x < depthBox.x + depthBox.width; ++x) {
+            auto depthValue = depthFrame.at<uint16_t>(y, x);
+            if (depthValue != 0) {  // Filter out invalid measurements
+                depths.push_back(depthValue);
+            }
+        }
+    }
+
+    float medianDepth = 0;
+    if (!depths.empty()) {
+        std::nth_element(depths.begin(), depths.begin() + depths.size() / 2, depths.end());
+        medianDepth = depths[depths.size() / 2];
+    }
+
+    LOG_INFO(logger, "Median Depth Value: {}", medianDepth);
+    return medianDepth;  // Return the median depth in millimeters
+}
+
+// Average
+// {
+//     // Calculate scaling ratios
+//     float scaleX = static_cast<float>(depthFrame.cols) / frame.cols;
+//     float scaleY = static_cast<float>(depthFrame.rows) / frame.rows;
+
+//     // Translate bounding box to depth frame coordinates
+//     cv::Rect depthBox;
+//     depthBox.x = static_cast<int>(box.x * scaleX);
+//     depthBox.y = static_cast<int>(box.y * scaleY);
+//     depthBox.width = static_cast<int>(box.width * scaleX);
+//     depthBox.height = static_cast<int>(box.height * scaleY);
+
+//     // Ensure depth box does not exceed the depth frame boundaries
+//     depthBox.x = std::max(depthBox.x, 0);
+//     depthBox.y = std::max(depthBox.y, 0);
+//     depthBox.width = std::min(depthBox.width, depthFrame.cols - depthBox.x);
+//     depthBox.height = std::min(depthBox.height, depthFrame.rows - depthBox.y);
+
+//     LOG_INFO(logger, "Adjusted Depth Box - x: {}, y: {}, width: {}, height: {}", depthBox.x, depthBox.y, depthBox.width, depthBox.height);
+
+//     // Compute the average depth within the bounding box
+//     double sumDepth = 0.0;
+//     int count = 0;
+
+//     for (int y = depthBox.y; y < depthBox.y + depthBox.height; ++y) {
+//         for (int x = depthBox.x; x < depthBox.x + depthBox.width; ++x) {
+//             auto depthValue = depthFrame.at<uint16_t>(y, x); // Assuming original depth frame type is CV_16U
+//             if (depthValue != 0) {  // Check for valid depth value
+//                 sumDepth += depthValue;
+//                 ++count;
+//             }
+//         }
+//     }
+
+
+//     float averageDepth = count > 0 ? static_cast<float>(sumDepth) / count : 0;  // Compute average or return 0 if no data
+//     LOG_INFO(logger, "The average depth value is: {}", averageDepth);
+//     return averageDepth; // Return the average depth in millimeters
+// }
 
 void updateSpatialCalcConfig(dai::SpatialLocationCalculatorConfigData &config, std::shared_ptr<dai::DataInputQueue> spatialCalcConfigInQueue)
 {

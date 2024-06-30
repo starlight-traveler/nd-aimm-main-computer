@@ -2,13 +2,17 @@
 #include "udp.h"
 #include <map>
 
-std::map<std::string, UDPClient> buildPeripherals(quill::Logger *logger)
+auto buildPeripherals(quill::Logger *logger) -> std::map<std::string, UDPClient>
 {
-
-    // Why after the emplace does the destructor get called?
     std::map<std::string, UDPClient> clients;
-    clients.emplace("eth0", UDPClient("eth0", "192.168.36.112", 3333, logger));
-    clients.emplace("eth1", UDPClient("eth1", "192.168.36.113", 3334, logger));
-
+    try
+    {
+        clients.emplace("eth0", UDPClient("Name", "192.168.1.1", 12345, logger));
+        LOG_TRACE_L1(logger, "UDPClient for eth0 initialized successfully.");
+    }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR(logger, "Failed to initialize UDPClient for eth0: {}", e.what());
+    }
     return clients;
 }

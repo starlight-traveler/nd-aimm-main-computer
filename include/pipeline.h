@@ -19,8 +19,9 @@ std::shared_ptr<dai::node::SpatialLocationCalculator> setupSpatialCalculator(dai
 void linkSpatialCalculationNodes(std::shared_ptr<dai::node::StereoDepth> depthNode, std::shared_ptr<dai::node::SpatialLocationCalculator> spatialCalculator, std::shared_ptr<dai::node::XLinkOut> xoutSpatialData, dai::Pipeline &pipeline);
 cv::Mat processDepthFrame(std::shared_ptr<dai::ImgFrame> inDepthPtr);
 void annotateDepthFrame(cv::Mat &depthFrameColor, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr);
-void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Inference inf, quill::Logger *logger);
+void processRgbFrame(cv::Mat &frame, std::shared_ptr<dai::ImgFrame> inRgb, Inference &inf, const cv::Mat &depthFrame, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr, quill::Logger *logger);
 void updateSpatialCalcConfig(dai::SpatialLocationCalculatorConfigData &config, std::shared_ptr<dai::DataInputQueue> spatialCalcConfigInQueue);
 void processFrames(std::shared_ptr<dai::DataOutputQueue> depthQueue, std::shared_ptr<dai::DataOutputQueue> spatialCalcQueue, std::shared_ptr<dai::DataOutputQueue> rgbQueue, std::shared_ptr<dai::DataInputQueue> spatialCalcConfigInQueue, Inference inf, ThreadSafeQueue<cv::Mat> &displayQueue, quill::Logger *logger);
+float getDepthFromBox(const cv::Rect &box, const cv::Mat &depthFrame, const cv::Mat &frame, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr, quill::Logger *logger);
 
 #endif // PIPELINE_SETUP_H

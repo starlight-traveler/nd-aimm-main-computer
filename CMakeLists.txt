@@ -138,6 +138,7 @@ enable_coverage(${OPTION_ENABLE_COVERAGE})
 
 # Project-wide include directories. Add any new general include directories here.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tests)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include the binary directory for version.h
 include_directories(${CMAKE_BINARY_DIR}/models)
 include_directories(${FLATBUFFERS_INCLUDE_DIRS})
@@ -171,6 +172,9 @@ add_executable(${PROJECT_NAME}
     src/pipeline/inference.cpp
     src/serialization/serialFactory.cpp
     src/serialization/serializerExample.cpp
+    src/threading.cpp
+    src/tests/fb_check_t.cpp
+    src/tests/peripherals_t.cpp
 )
 
 # Set include directories for the target. 
