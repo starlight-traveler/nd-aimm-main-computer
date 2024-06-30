@@ -94,7 +94,7 @@ dai::Pipeline setupPipeline(quill::Logger *logger)
     catch (...)
     {
         LOG_ERROR(logger, "Error thrown at rgbStream.");
-    }
+    }  
 
     try
     {
@@ -234,6 +234,8 @@ void processFrames(std::shared_ptr<dai::DataOutputQueue> depthQueue, std::shared
             float scale = 0.8;
             cv::resize(frame, frame, cv::Size(frame.cols * scale, frame.rows * scale));
 
+
+            LOG_TRACE_L2(logger, "Pushing frame into queue!");
             // Push frames to display in the main thread
             displayQueue.push(frame);
 

@@ -150,27 +150,37 @@ int main()
     // Start the logging and incrementing loop in a separate thread
     std::thread log_thread(log_increment, std::ref(x), logger);
 
-    // Wait for the camera thread to finish, if it ever does
-    camera_thread.detach();
+    LOG_TRACE_L2(logger, "Started While Loop");
 
-    // The log thread will run indefinitely unless you provide a mechanism to stop it
-    log_thread.join();
-
-    // Main thread loop for display
     while (true)
     {
       cv::Mat frame;
+      LOG_TRACE_L2(logger, "Checking if displayQueue is empty: {}", displayQueue.empty());
       if (displayQueue.tryPop(frame))
       {
+        LOG_TRACE_L2(logger, "Displaying frame.");
         cv::imshow("Display Window", frame);
-        if (cv::waitKey(1) >= 0)
+        int key = cv::waitKey(30); // Wait for 30 ms
+        if (key == 27)
+        { // Check if the 'ESC' key was pressed
+          LOG_TRACE_L2(logger, "ESC key pressed, exiting loop.");
           break;
-      } else {
-        LOG_ERROR(logger, "Nothing to display.");
+        }
       }
-
-      
+      else
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Delay to prevent high CPU usage when queue is empty
+      }
     }
+
+      LOG_TRACE_L2(logger, "Waiting to join.");
+
+      // Wait for the camera thread to finish, if it ever does
+      camera_thread.join();
+
+      // The log thread will run indefinitely unless you provide a mechanism to stop it
+      log_thread.join();
+
 
     return 0;
 }
