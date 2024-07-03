@@ -136,12 +136,16 @@ enable_coverage(${OPTION_ENABLE_COVERAGE})
 # Add any new find_package() calls here for additional external libraries.
 # This is only for system calls which should be as limited.
 
+set(imgui_SOURCE_DIR "lib/imgui/")
+
 # Project-wide include directories. Add any new general include directories here.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tests)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include the binary directory for version.h
 include_directories(${CMAKE_BINARY_DIR}/models)
 include_directories(${FLATBUFFERS_INCLUDE_DIRS})
+include_directories(${imgui_SOURCE_DIR})
+
 
 # Adding external dependencies located in the 'lib' directory. 
 # To add new libraries, create a subdirectory in 'lib' and use add_subdirectory() here.
@@ -152,6 +156,25 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/quill)
 project(AIMM LANGUAGES CXX)
 
 find_package(OpenCV 4 REQUIRED)
+find_package(OpenGL REQUIRED)
+
+
+include_directories( ${OPENGL_INCLUDE_DIRS} )
+
+set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
+set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
+set( GLAD_GL "" )
+
+add_subdirectory(lib/glfw)
+option( GLFW-CMAKE-STARTER-USE-GLFW-GLAD "Use GLAD from GLFW" ON )
+
+if( GLFW-CMAKE-STARTER-USE-GLFW-GLAD )
+    include_directories("${GLFW_SOURCE_DIR}/deps")
+    set( GLAD_GL "${GLFW_SOURCE_DIR}/deps/glad/gl.h" )
+endif()
+
+
+
 
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "Build flatbuffers tests")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/flatbuffers
@@ -175,6 +198,7 @@ add_executable(${PROJECT_NAME}
     src/threading.cpp
     src/tests/fb_check_t.cpp
     src/tests/peripherals_t.cpp
+    ${GLAD_GL}
 )
 
 # Set include directories for the target. 
@@ -186,6 +210,9 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
+
+
 # Link libraries with the target. 
 # Add new libraries to link against by appending them to this list.
 target_link_libraries(${PROJECT_NAME}
@@ -194,7 +221,24 @@ target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}   # Linking with OpenCV libraries.
         quill::quill     # Logging library.
         flatbuffers
+        glfw 
 )
+
+target_sources(${PROJECT_NAME} PRIVATE
+    ${imgui_SOURCE_DIR}/imgui.h
+    ${imgui_SOURCE_DIR}/imgui_internal.h
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${imgui_SOURCE_DIR}/
+    ${imgui_SOURCE_DIR}/backends)
 
 # Specify C++17 as the target C++ standard for this project.
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
