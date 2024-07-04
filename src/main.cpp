@@ -58,6 +58,12 @@ Use it well.
 #include "fb_check_t.h"
 #include "peripherals_t.h"
 
+#include "gui.h"
+#include "main_glfw_gl3.h"
+
+
+
+
 /**
  * @brief Global variables should be kept to a minimum
  * 
@@ -78,6 +84,7 @@ std::atomic<int> x(0);
  */
 int main()
 {
+
   /**
    * @brief Initialize the system logger
    *
@@ -116,50 +123,25 @@ int main()
   assert(testing_peripherals::peripheralTest(logger));
 
   /**
-   * @brief Construct objects for main thread, unsure of how this will work
+   * @brief GUI Stuff
    * 
-   * Likely where GUI will need to be placed, however is it necessary, does
-   * main need to instrument all values?
+   */
+  entrance();
+
+  /**
+   * @brief Functions that will never return likely, if they do must be before
+   * joins of things that will never finish
+   *
+   * @fn camera_thread will not return
+   * @fn log_thread will not return
    */
 
-  while (true)
-  {
-    cv::Mat frame;
-    // LOG_TRACE_L2(logger, "Checking if displayQueue is empty: {}", displayQueue.empty());
-    if (displayQueue.tryPop(frame))
-    {
-      // LOG_TRACE_L2(logger, "Displaying frame.");
-      cv::imshow("Display Window", frame);
-      int key = cv::waitKey(30); // Wait for 30 ms
-      if (key == 27)
-      { // Check if the 'ESC' key was pressed
-        LOG_TRACE_L2(logger, "ESC key pressed, exiting loop.");
-        break;
-      }
-    }
-    else
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Delay to prevent high CPU usage when queue is empty
-    }
-  }
+  // Wait for the camera thread to finish, if it ever does
+  camera_thread.join();
 
-    LOG_TRACE_L2(logger, "Waiting to join.");
-
-
-    /**
-     * @brief Functions that will never return likely, if they do must be before
-     * joins of things that will never finish
-     * 
-     * @fn camera_thread will not return
-     * @fn log_thread will not return
-     */
-
-    // Wait for the camera thread to finish, if it ever does
-    camera_thread.join();
-
-    // The log thread will run indefinitely unless you provide a mechanism to stop it
-    log_thread.join();
-
+  // The log thread will run indefinitely unless you provide a mechanism to stop it
+  log_thread.join();
 
   return 0;
+
 }
