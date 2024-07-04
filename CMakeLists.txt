@@ -141,6 +141,7 @@ set(imgui_SOURCE_DIR "lib/imgui/")
 # Project-wide include directories. Add any new general include directories here.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tests)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include the binary directory for version.h
 include_directories(${CMAKE_BINARY_DIR}/models)
 include_directories(${FLATBUFFERS_INCLUDE_DIRS})
@@ -182,6 +183,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/flatbuffers
                  EXCLUDE_FROM_ALL)
 
 
+file(GLOB SOCKET_SOURCES "src/gui/socket/*.cpp")
 
 # Define the executable target. 
 # Add new source files to this list to compile them as part of the project.
@@ -198,7 +200,12 @@ add_executable(${PROJECT_NAME}
     src/threading.cpp
     src/tests/fb_check_t.cpp
     src/tests/peripherals_t.cpp
+    src/gui/main_glfw_gl3.cpp
+    src/gui/SampleBasic.cpp
+    # src/gui/sample.cpp
+    # src/gui/Roboto_Medium.cpp
     ${GLAD_GL}
+    ${SOCKET_SOURCES}
 )
 
 # Set include directories for the target. 

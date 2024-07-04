@@ -23,7 +23,7 @@ void orchestrationThreadLRCamera(quill::Logger *logger, ThreadSafeQueue<cv::Mat>
 {
 
     // Yolo model inferencing, if this fails what is the point in setting up anything else?
-    Inference inf("models/yolov8m.onnx", cv::Size(640, 480), "classes.txt", false);
+    Inference inf("/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/build/models/yolov8m.onnx", cv::Size(640, 480), "classes.txt", false);
 
     // Setup pipeline and linker
     dai::Pipeline pipeline = setupPipeline(logger);
