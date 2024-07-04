@@ -5,7 +5,7 @@
 // are needed to be up and running.
 //=================================================================================================
 
-#include "NetImgui_Api.h"
+#include <NetImgui_Api.h>
 #include "Sample.h"
 
 //=================================================================================================
@@ -14,15 +14,15 @@
 class SampleBasic : public SampleClient_Base
 {
 public:
-					SampleBasic() : SampleClient_Base("SampleBasic") {}
-virtual ImDrawData* Draw() override;
+	SampleBasic() : SampleClient_Base("SampleBasic") {}
+	virtual ImDrawData *Draw() override;
 };
 
 //=================================================================================================
 // GET SAMPLE
 // Each project must return a valid sample object
 //=================================================================================================
-SampleClient_Base& GetSample()
+SampleClient_Base &GetSample()
 {
 	static SampleBasic sample;
 	return sample;
@@ -31,7 +31,7 @@ SampleClient_Base& GetSample()
 //=================================================================================================
 // DRAW
 //=================================================================================================
-ImDrawData* SampleBasic::Draw()
+ImDrawData *SampleBasic::Draw()
 {
 	//---------------------------------------------------------------------------------------------
 	// (1) Start a new Frame.
@@ -45,12 +45,12 @@ ImDrawData* SampleBasic::Draw()
 	//-----------------------------------------------------------------------------------------
 	// (2) Draw ImGui Content
 	//-----------------------------------------------------------------------------------------
-	SampleClient_Base::Draw_Connect(); //Note: Connection to remote server done in there
+	SampleClient_Base::Draw_Connect(); // Note: Connection to remote server done in there
 
-	//Note: Some dummy text content
-	ImGui::SetNextWindowPos(ImVec2(32,48), ImGuiCond_Once);
-	ImGui::SetNextWindowSize(ImVec2(400,400), ImGuiCond_Once);
-	if( ImGui::Begin("Sample Basic", nullptr) )
+	// Note: Some dummy text content
+	ImGui::SetNextWindowPos(ImVec2(32, 48), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Once);
+	if (ImGui::Begin("Sample Basic", nullptr))
 	{
 		ImGui::TextColored(ImVec4(0.1, 1, 0.1, 1), "Basic demonstration of NetImgui code integration.");
 		ImGui::TextWrapped("Create a basic Window with some text.");

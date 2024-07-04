@@ -71,7 +71,7 @@ Use it well.
  */
 
 // Use atomic for synchronization across threads
-std::atomic<int> x(0);
+// std::atomic<int> x(0);
 
 /**
  * 
@@ -91,10 +91,10 @@ int main()
    * Initializes the system logger to capture and log system events. Uses the
    * initialize_logger function to configure and obtain a logger instance.
    */
-  quill::Logger *logger = initialize_logger();
+  // quill::Logger *logger = initialize_logger();
 
-  LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
-  LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
+  // LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
+  // LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
 
   /**
    * @brief Start all necessary threading
@@ -102,16 +102,16 @@ int main()
    * This section will start all the necessary threads, seperated in grouping
    */
 
-  // Neccessary threading queues
-  ThreadSafeQueue<cv::Mat> displayQueue;
+  // // Neccessary threading queues
+  // ThreadSafeQueue<cv::Mat> displayQueue;
 
-  // Camera threads
-  std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue)); // Pass the address of logger
+  // // Camera threads
+  // std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue)); // Pass the address of logger
 
-  // Worker threads
+  // // Worker threads
 
-  // Misc. threads
-  std::thread log_thread(log_increment, std::ref(x), logger);
+  // // Misc. threads
+  // std::thread log_thread(log_increment, std::ref(x), logger);
 
 
   /**
@@ -119,8 +119,8 @@ int main()
    * 
    * All tests should be run before GUI start up
    */
-  testing_flatbuffer::flatBufferGeneralTest(logger);
-  assert(testing_peripherals::peripheralTest(logger));
+  // testing_flatbuffer::flatBufferGeneralTest(logger);
+  // assert(testing_peripherals::peripheralTest(logger));
 
   /**
    * @brief GUI Stuff
@@ -136,11 +136,11 @@ int main()
    * @fn log_thread will not return
    */
 
-  // Wait for the camera thread to finish, if it ever does
-  camera_thread.join();
+  // // Wait for the camera thread to finish, if it ever does
+  // camera_thread.join();
 
-  // The log thread will run indefinitely unless you provide a mechanism to stop it
-  log_thread.join();
+  // // The log thread will run indefinitely unless you provide a mechanism to stop it
+  // log_thread.join();
 
   return 0;
 

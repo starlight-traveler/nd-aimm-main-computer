@@ -202,8 +202,9 @@ add_executable(${PROJECT_NAME}
     src/tests/peripherals_t.cpp
     src/gui/main_glfw_gl3.cpp
     src/gui/SampleBasic.cpp
+    src/gui/Sample.cpp
     # src/gui/sample.cpp
-    # src/gui/Roboto_Medium.cpp
+    src/gui/Roboto_Medium.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
