@@ -10,9 +10,12 @@
 [submodule "lib/flatbuffers"]
 	path = lib/flatbuffers
 	url = https://github.com/google/flatbuffers.git
-[submodule "lib/imgui"]
-	path = lib/imgui
-	url = https://github.com/ocornut/imgui.git
 [submodule "lib/glfw"]
 	path = lib/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "lib/ImTerm"]
+	path = lib/ImTerm
+	url = https://github.com/Organic-Code/ImTerm.git
+[submodule "lib/netImgui"]
+	path = lib/netImgui
+	url = https://github.com/sammyfreg/netImgui.git
