@@ -59,8 +59,6 @@ Use it well.
 #include "peripherals_t.h"
 
 #include "gui.h"
-#include "main_glfw_gl3.h"
-
 
 
 
@@ -106,12 +104,21 @@ int main()
   // ThreadSafeQueue<cv::Mat> displayQueue;
 
   // // Camera threads
-  // std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue)); // Pass the address of logger
+  // std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue));
+  // // Camera thread #1
+  // // Camera thread #2
+  // // Camera thread #3
+  // // Camera thread #4
+  // // Camera thread #5
 
   // // Worker threads
+  // // Spatial Analysis thread
+  // // Spatial Actor thread
 
   // // Misc. threads
   // std::thread log_thread(log_increment, std::ref(x), logger);
+  // // Perhipheral Manager thread
+  // // Emergency Shutoff Manager thread
 
 
   /**

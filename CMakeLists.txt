@@ -200,11 +200,10 @@ add_executable(${PROJECT_NAME}
     src/threading.cpp
     src/tests/fb_check_t.cpp
     src/tests/peripherals_t.cpp
-    src/gui/main_glfw_gl3.cpp
-    src/gui/SampleBasic.cpp
-    src/gui/Sample.cpp
-    # src/gui/sample.cpp
-    src/gui/Roboto_Medium.cpp
+    src/gui/gui.cpp
+    src/gui/runner.cpp
+    src/gui/aimm_drawer.cpp
+    src/gui/resources/fonts/roboto_medium.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )

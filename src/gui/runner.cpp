@@ -1,19 +1,10 @@
-//=================================================================================================
-// SAMPLE 
-//-------------------------------------------------------------------------------------------------
-// Common code shared by all samples 
-//=================================================================================================
-
 #include <NetImgui_Api.h>
 #include <math.h>
-#include "Sample.h"
-#include "Roboto_Medium.cpp"
-
-// When NetImgui is disabled, it doesn't include these needed headers
-#if !NETIMGUI_ENABLED
-#include "imgui.h"
-#include <stdint.h>
-#endif
+#include <stdio.h>
+#include <fstream>
+#include "runner.h"
+#include "resources/fonts/roboto_medium.cpp"
+#include "ImGuiNotify.h"
 
 //=================================================================================================
 // FontCreationCallback_Default
@@ -26,7 +17,7 @@ void FontCreationCallback_Default(float PreviousDPIScale, float NewDPIScale)
 {
 	IM_UNUSED(PreviousDPIScale); IM_UNUSED(NewDPIScale);
 #if NETIMGUI_ENABLED
-	if (GetSample().UpdateFont(NewDPIScale, false))
+	if (GetAIMM().UpdateFont(NewDPIScale, false))
 	{
 		uint8_t* pPixelData(nullptr); int width(0), height(0);
 		ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&pPixelData, &width, &height);
@@ -40,8 +31,8 @@ void FontCreationCallback_Default(float PreviousDPIScale, float NewDPIScale)
 //-------------------------------------------------------------------------------------------------
 //
 //=================================================================================================
-SampleClient_Base::SampleClient_Base(const char* sampleName)
-: mSampleName(sampleName)
+AIMMClient_Base::AIMMClient_Base(const char* AIMMName)
+: mAIMMName(AIMMName)
 {
 #if NETIMGUI_ENABLED
 	mConnect_PortClient		= NetImgui::kDefaultClientPort;
@@ -55,7 +46,7 @@ SampleClient_Base::SampleClient_Base(const char* sampleName)
 //-------------------------------------------------------------------------------------------------
 //
 //=================================================================================================
-bool SampleClient_Base::Startup()
+bool AIMMClient_Base::Startup()
 {
 	mpContextLocal = mpContextMain = ImGui::GetCurrentContext();
 #if NETIMGUI_ENABLED
@@ -70,7 +61,7 @@ bool SampleClient_Base::Startup()
 //-------------------------------------------------------------------------------------------------
 //
 //=================================================================================================
-void SampleClient_Base::Shutdown()
+void AIMMClient_Base::Shutdown()
 {
 #if NETIMGUI_ENABLED
 	NetImgui::Shutdown();
@@ -86,9 +77,9 @@ void SampleClient_Base::Shutdown()
 // 
 // The DPI scaling can also be entirely ignored by generating the font texture once 
 // to a fixed size, paired with 'ImGui::GetIO().FontGlobalScale' for the text size increase.
-// However, this create blurier text. See 'SampleFontDPI' for more details
+// However, this create blurier text. See 'AIMMFontDPI' for more details
 //=================================================================================================
-bool SampleClient_Base::UpdateFont(float fontScaleDPI, bool isLocal)
+bool AIMMClient_Base::UpdateFont(float fontScaleDPI, bool isLocal)
 {
 	IM_UNUSED(isLocal);
 	constexpr float kFontPixelSize = 16.f;
@@ -111,20 +102,32 @@ bool SampleClient_Base::UpdateFont(float fontScaleDPI, bool isLocal)
 			FontConfig.SizePixels	= static_cast<float>(pixelSizeWanted);
 			FontAtlas->Clear();
 		
-		#if 1 
-			// Using Roboto Font with DPI awareness
-			StringCopy(FontConfig.Name, "Roboto Medium");
-			ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(Roboto_Medium_compressed_data, Roboto_Medium_compressed_size, FontConfig.SizePixels, &FontConfig);
-		#else 
-			// But could as easily rely on the default font
-			FontAtlas->AddFontDefault(&FontConfig);
-		#endif
+		/**
+		 * @brief Need to figure out why the callback for the font crashes the application, setting
+		 * to default means it won't crash, but become unuseable on the system.
+		 * 
+		 */
+		
+			ImGuiIO &io = ImGui::GetIO();
+			io.Fonts->AddFontDefault();
+
+			float baseFontSize = 16.0f;						 
+			float iconFontSize = baseFontSize * 2.0f / 3.0f;
+
+			std::ifstream fontAwesomeFile(FONT_ICON_FILE_NAME_FAS);
+
+			static const ImWchar iconsRanges[] = {ICON_MIN_FA, ICON_MAX_16_FA, 0};
+			ImFontConfig iconsConfig;
+			iconsConfig.MergeMode = true;
+			iconsConfig.PixelSnapH = true;
+			iconsConfig.GlyphMinAdvanceX = iconFontSize;
+			io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, iconFontSize, &iconsConfig, iconsRanges);
 			
 			FontAtlas->Build();
 			// Regenerate the Font Texture (only if used by local context)
-			extern void ExtraSampleBackend_UpdateFontTexture();
+			extern void ExtraAIMMBackend_UpdateFontTexture();
 			if( ImGui::GetCurrentContext() == mpContextLocal ){
-				ExtraSampleBackend_UpdateFontTexture();
+				ExtraAIMMBackend_UpdateFontTexture();
 			}
 			return true;
 		}
@@ -135,17 +138,33 @@ bool SampleClient_Base::UpdateFont(float fontScaleDPI, bool isLocal)
 //=================================================================================================
 // Draw_Connect
 //-------------------------------------------------------------------------------------------------
-// Function called by all samples, to display the Connection Options, and some other default
+// Function called by all AIMMs, to display the Connection Options, and some other default
 // MainMenu entries. 
 //=================================================================================================
-void SampleClient_Base::Draw_Connect()
+std::map<DrawFlags, bool> AIMMClient_Base::Draw_Connect()
 {
+
+	std::map<DrawFlags, bool> drawMap;
+
 #if NETIMGUI_ENABLED
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3,6) );
+
+	// Attempt to auto-connect to a predefined server at start if not already connected or attempting to connect
+    if (!NetImgui::IsConnected() && !NetImgui::IsConnectionPending())
+    {
+        static bool autoAttempt = true;
+        if (autoAttempt)
+        {
+            NetImgui::ConnectToApp("AIMM", "localhost", 8888, mCallback_ThreadLaunch, mCallback_FontGenerate);
+            autoAttempt = false; // Only attempt once per application run
+        }
+    }
+
+
 	if( ImGui::BeginMainMenuBar() )
 	{				
 		ImGui::AlignTextToFramePadding();
-		ImGui::TextColored(ImVec4(0.1, 1, 0.1, 1), "%s", mSampleName);
+		ImGui::TextColored(ImVec4(0.1, 1, 0.1, 1), "%s", mAIMMName);
 		ImGui::SameLine(0,32);
 		
 		//-----------------------------------------------------------------------------------------
@@ -193,7 +212,7 @@ void SampleClient_Base::Draw_Connect()
 				ImGui::Separator();
 				if (ImGui::Button("Connect", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 				{
-					NetImgui::ConnectToApp(mSampleName, mConnect_HostnameServer, mConnect_PortServer, mCallback_ThreadLaunch, mCallback_FontGenerate);
+					NetImgui::ConnectToApp(mAIMMName, mConnect_HostnameServer, mConnect_PortServer, mCallback_ThreadLaunch, mCallback_FontGenerate);
 				}
 				ImGui::EndMenu();
 			}
@@ -211,30 +230,113 @@ void SampleClient_Base::Draw_Connect()
 				ImGui::Separator();
 				if (ImGui::Button("Listen", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 				{
-					NetImgui::ConnectFromApp(mSampleName, mConnect_PortClient, mCallback_ThreadLaunch, mCallback_FontGenerate);
+					NetImgui::ConnectFromApp(mAIMMName, mConnect_PortClient, mCallback_ThreadLaunch, mCallback_FontGenerate);
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Start listening for a connection request by a remote netImgui server, on the provided Port.");
 		}
+
+		// ----------------
 		
-		ImGui::SameLine(0,40);	
-		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8,0.8,0.8,0.9) );
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));				
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, mbShowDemoWindow ? 1.f : 0.f);
+		// ImGui::SameLine(0,40);	
+		// ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8,0.8,0.8,0.9) );
+		// ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));				
+		// ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, mbShowDemoWindow ? 1.f : 0.f);
+		// ImGui::SetCursorPosY(3);
+		// if( ImGui::Button(" Show ImGui Demo ") ){
+		// 	mbShowDemoWindow = !mbShowDemoWindow;
+		// }
+		// ImGui::PopStyleColor();
+		// ImGui::PopStyleVar(2);
+
+		// ----------------
+
+
+		// Button to toggle the visibility
+		ImGui::SameLine(0,40);    
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8,0.8,0.8,0.9));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));                
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
 		ImGui::SetCursorPosY(3);
-		if( ImGui::Button(" Show ImGui Demo ") ){
-			mbShowDemoWindow = !mbShowDemoWindow;
+		if (ImGui::Button(" Settings ")){
+			showSettingsWindow = !showSettingsWindow; // Toggle the visibility of the info window
 		}
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar(2);
+
+		ImGui::SameLine(0, 40);
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.8, 0.8, 0.9));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+		ImGui::SetCursorPosY(3);
+		if (ImGui::Button(" Application "))
+		{
+			showSettingsWindow = !showSettingsWindow; // Toggle the visibility of the info window
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(2);
+
+		ImGui::SameLine(0, 40);
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.8, 0.8, 0.9));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+		ImGui::SetCursorPosY(3);
+		if (ImGui::Button(" Terminal "))
+		{
+			showSettingsWindow = !showSettingsWindow; // Toggle the visibility of the info window
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(2);
+
+		ImGui::SameLine(0, 40);
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.8, 0.8, 0.9));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(3, 3));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+		ImGui::SetCursorPosY(3);
+		if (ImGui::Button(" Status "))
+		{
+			showStatusWindow = !showStatusWindow; // Toggle the visibility of the info window
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(2);
+
 		ImGui::EndMainMenuBar();
 	}
+
 	ImGui::PopStyleVar();
 
 	if( mbShowDemoWindow ){
 		ImGui::ShowDemoWindow(&mbShowDemoWindow);
 	}
+
+	// ----------------------------------------------
+	// All statements are below here for drawing
+	// ----------------------------------------------
+
+	// Notifications style setup
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);	  // Disable round borders
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f); // Disable borders
+
+	// Notifications color setup
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.00f)); // Background color
+
+	// Main rendering function
+	ImGui::RenderNotifications();
+
+	// ——————————————————————————————— WARNING ———————————————————————————————
+	//  Argument MUST match the amount of ImGui::PushStyleVar() calls
+	ImGui::PopStyleVar(2);
+	// Argument MUST match the amount of ImGui::PushStyleColor() calls
+	ImGui::PopStyleColor(1);
+
+	drawMap[DrawFlags::ShowSettingsWindow] = showSettingsWindow;
+	drawMap[DrawFlags::ShowApplicationWindow] = showSettingsWindow;
+	drawMap[DrawFlags::ShowTerminalWindow] = showTerminalWindow;
+	drawMap[DrawFlags::ShowStatusWindow] = showStatusWindow;
+
+	return drawMap;
+
 #endif // #if NETIMGUI_ENABLED
 }
