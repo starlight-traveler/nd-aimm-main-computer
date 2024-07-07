@@ -203,6 +203,8 @@ add_executable(${PROJECT_NAME}
     src/gui/gui.cpp
     src/gui/runner.cpp
     src/gui/aimm_drawer.cpp
+    src/gui/aimm_status.cpp
+    src/gui/aimm_settings.cpp
     src/gui/resources/fonts/roboto_medium.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}

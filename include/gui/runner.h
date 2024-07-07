@@ -3,6 +3,8 @@
 #include <NetImgui_Api.h>
 #include <map>
 #include <string>
+#include "ImGuiNotify.h"
+#include "IconsFontAwesome6.h"
 
 // Forward declares when NetImgui is not enabled
 #if !NETIMGUI_ENABLED
@@ -50,6 +52,34 @@ protected:
 	char mConnect_HostnameServer[128] = {"localhost"};			  //!< IP/Hostname used to send a connection request when when trying to reach the server
 	int mConnect_PortServer = 0;								  //!< Port used to send a connection request when when trying to reach the server
 	int mConnect_PortClient = 0;								  //!< Port opened when waiting for a server connection request
+};
+
+//=================================================================================================
+// AIMM GUI CLASS
+//=================================================================================================
+class AIMMBasic : public AIMMClient_Base
+{
+public:
+	AIMMBasic() : AIMMClient_Base("Notre Dame - AIMM Team GUI") {}
+
+	// Overriden Functions
+	virtual ImDrawData *Draw() override;
+
+	// Settings Functions
+	void DrawSettingsWindow(bool *p_open);
+
+	// Status Functions
+	void DrawStatusWindow(bool *s_open);
+	void TestStatusButton(const char *id, const ImVec4 &color, bool running, int display_counter);
+	void TestStatusColumnsAndOverallHealth(int numPasses, int numWarnings, int numErrors, std::string operationalStatus);
+
+private:
+	int colorIndex = 0; // To cycle through colors
+	std::vector<ImVec4> colors = {
+		ImVec4(1.0f, 0.0f, 0.0f, 1.0f), // Red
+		ImVec4(0.0f, 1.0f, 0.0f, 1.0f), // Green
+		ImVec4(1.0f, 1.0f, 0.0f, 1.0f)	// Yellow
+	};
 };
 
 //=============================================================================
