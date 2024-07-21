@@ -23,3 +23,6 @@
 	path = lib/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "lib/pybind11"]
+	path = lib/pybind11
+	url = https://github.com/pybind/pybind11.git

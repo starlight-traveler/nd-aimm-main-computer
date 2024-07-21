@@ -40,7 +40,7 @@ Use it well.
 #include <iostream>
 #include "flatbuffers/flatbuffers.h"
 #include "quill/LogMacros.h"
-
+#include <pybind11/embed.h>
 
 // Userland headers
 #include "version.h"
@@ -53,14 +53,31 @@ Use it well.
 #include "threading.h"
 #include "example_generated.h"
 #include "thread_safe_queue.h"
+#include "thread_safe_queue_network.h"
+#include "rns_sender.h"
+#include <csignal>
+#include "rns_manager.h"
+#include "ring_buffer.h"
+#include "initializer.h"
 
 // Test headers
 #include "fb_check_t.h"
 #include "peripherals_t.h"
+#include "a_star_check_t.h"
 
 #include "gui.h"
+#include "r_tree.h"
+typedef RTree<int *, double, 3> MyTree;
 
+namespace py = pybind11;
 
+void signalHandler(int signum)
+{
+  std::cout << "Interrupt signal (" << signum << ") received.\n";
+  // Cleanup and close up stuff here
+  // Terminate program
+  exit(signum);
+}
 
 /**
  * @brief Global variables should be kept to a minimum
@@ -69,7 +86,6 @@ Use it well.
  */
 
 // Use atomic for synchronization across threads
-// std::atomic<int> x(0);
 
 /**
  * 
@@ -83,16 +99,48 @@ Use it well.
 int main()
 {
 
-  /**
-   * @brief Initialize the system logger
-   *
-   * Initializes the system logger to capture and log system events. Uses the
-   * initialize_logger function to configure and obtain a logger instance.
-   */
-  // quill::Logger *logger = initialize_logger();
+  // ----- Must Happen Before Runtime ----- //
 
-  // LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
-  // LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
+  // Signal handler needed or CTRL-C does not work as intended
+  signal(SIGINT, signalHandler);
+
+  // Must set enviornment path for pybind11, must happen befpre the python interpreter
+  setenv("PYTHONPATH", "/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/runnable/", 1);
+
+  // Start the python interpreter
+  py::scoped_interpreter guard{};
+
+  /**
+   * @brief Initialize the system
+   *
+   * Initializes the system logger to capture and log system events. Initializes
+   * the signletons that need to be fired once.
+   */
+  quill::Logger *logger = initialize_logger();
+
+  LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
+  LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
+
+  // ----- Non-Threaded ----- //
+
+  primary_initialization();
+  // secondary_initialization();
+  // tertiary_initialization();
+
+  // FIXME: RNS sender keeping log of where it was at with no interface
+  // connected
+  rns_sender_manager(logger);
+  py::gil_scoped_release release;
+
+  /**
+   * @brief Start all tests to make sure functionality exits atomically
+   *
+   * All tests should run to make sure no threading issues or post-compilation
+   * issues occur.
+   */
+  testing_flatbuffer::flatBufferGeneralTest(logger);
+  testing_peripherals::peripheralTest(logger);
+  testing_a_star::a_star_runner(logger);
 
   /**
    * @brief Start all necessary threading
@@ -100,40 +148,43 @@ int main()
    * This section will start all the necessary threads, seperated in grouping
    */
 
-  // // Neccessary threading queues
-  // ThreadSafeQueue<cv::Mat> displayQueue;
+  // ----- Threading Structures ----- //
+  ThreadSafeQueue<cv::Mat> displayQueue;
+  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataQueueNetwork;
 
-  // // Camera threads
-  // std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue));
-  // // Camera thread #1
-  // // Camera thread #2
-  // // Camera thread #3
-  // // Camera thread #4
-  // // Camera thread #5
+  // ----- Camera Threads----- //
+  std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue));
+  // TODO: Camera thread #1
+  // TODO: Camera thread #2
+  // TODO: Camera thread #3
+  // TODO: Camera thread #4
+  // TODO: Camera thread #5
 
-  // // Worker threads
-  // // Spatial Analysis thread
-  // // Spatial Actor thread
+  // ----- Worker ----- //
+  // TODO: Spatial Analysis thread
+  // TODO: Spatial Actor thread
+  // TODO: MavLink Command Forwarder
 
-  // // Misc. threads
+  // ----- Misc. Threads ----- //
+
   // std::thread log_thread(log_increment, std::ref(x), logger);
-  // // Perhipheral Manager thread
-  // // Emergency Shutoff Manager thread
+  // FIXME: std::thread network_sender([&]()
+  //                           { rns_sender_manager(dataQueueNetwork); });
 
-
-  /**
-   * @brief Start all tests if necessary, should not be done in production
-   * 
-   * All tests should be run before GUI start up
-   */
-  // testing_flatbuffer::flatBufferGeneralTest(logger);
-  // assert(testing_peripherals::peripheralTest(logger));
+  // TODO: Perhipheral manager thread
+  // TODO: Heartbeat thread
+  // TODO: Emergency Shutoff Manager thread
+  
 
   /**
-   * @brief GUI Stuff
+   * @brief GUI Entrance
    * 
+   * All GUI systems should be handled in this function, the GUI should not
+   * be exposed anywhere else. If the GUI needs to be contexted, then it 
+   * should be done in a threaded manner.
    */
-  entrance();
+
+  entrance(logger);
 
   /**
    * @brief Functions that will never return likely, if they do must be before
@@ -141,14 +192,22 @@ int main()
    *
    * @fn camera_thread will not return
    * @fn log_thread will not return
+   * @fn network_sender will not return
    */
 
-  // // Wait for the camera thread to finish, if it ever does
-  // camera_thread.join();
-
-  // // The log thread will run indefinitely unless you provide a mechanism to stop it
+  camera_thread.join();
   // log_thread.join();
+  // network_sender.join();
 
-  return 0;
-
+    return 0;
 }
+
+/*
+Examples of how to do stuff:
+
+// ---- Pushing To Network ---- //
+
+dataQueueNetwork.push(std::make_tuple(getRNSHexID("nd-aimm"), "/Users////.reticulum", "Hello, Reticulum!"));
+
+
+*/

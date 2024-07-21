@@ -189,7 +189,7 @@ compile_flatbuffers() {
 # Function to move compiled FlatBuffers to include directory
 move_flatbuffers() {
   echo "${BoldBlue}[FlatBuffers]${Reset} ${Green}Injecting compiled headers to include directory...${Reset}"
-  mv src/serialization/fbs_gen/* include/
+  mv src/serialization/fbs_gen/* include/serialization/
   echo "${BoldBlue}[FlatBuffers]${Reset} ${Green}Successfully injected headers!${Reset}"
 }
 
@@ -225,6 +225,7 @@ FLATBUFFER=true
 COMPILE_PROJECT=false
 BUILD_PROJECT_EARTHLY=true
 FLATBUFFER_CLEAN=false
+HEADLESS=OFF
 
 # Enhanced option parsing
 while [[ "$#" -gt 0 ]]; do
@@ -253,6 +254,7 @@ while [[ "$#" -gt 0 ]]; do
          BUILD_PROJECT_EARTHLY=false
          shift ;;
         -h|--help) display_help ;;
+        --headless) HEADLESS=ON; shift ;;
         *) echo "${Yellow}================================================================================${Reset}\n${Red}Unknown option: $1${Reset}"; display_help; exit 1 ;;
     esac
 done
@@ -356,7 +358,7 @@ if [[ "$COMPILE_PROJECT" == true ]]; then
   echo "${BoldBlue}[Build]${Reset} ${Green}Configuring with CMake...${Reset}"
   echo "${Yellow}================================================================================${Reset}"
   echo "${BoldBlue}********************************************************************************${Reset}"
-  cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${COMPILER:+-DCMAKE_CXX_COMPILER=$COMPILER} || { echo "CMake configuration failed"; exit 1; }
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHEADLESS=$HEADLESS ${COMPILER:+-DCMAKE_CXX_COMPILER=$COMPILER} || { echo "CMake configuration failed"; exit 1; }
   echo "${Yellow}================================================================================${Reset}"
   echo "${BoldBlue}[Build]${Reset} ${Green}Building with CMake...${Reset}"
   echo "${Yellow}================================================================================${Reset}"

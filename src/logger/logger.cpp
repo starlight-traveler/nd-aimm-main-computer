@@ -2,6 +2,7 @@
 #include "quill/Frontend.h"
 #include "quill/Logger.h"
 #include "quill/sinks/ConsoleSink.h"
+#include "quill/sinks/FileSink.h"
 
 #include <utility>
 
@@ -21,7 +22,17 @@ quill::Logger *initialize_logger()
     // Create the sink
     auto console_sink = quill::Frontend::create_or_get_sink<quill::ConsoleSink>("sink_id_1", custom_console_colours);
 
-    quill::Logger *logger = quill::Frontend::create_or_get_logger("root", std::move(console_sink));
+    auto file_sink = quill::Frontend::create_or_get_sink<quill::FileSink>(
+        "aimm_logging.log",
+        []()
+        {
+            quill::FileSinkConfig cfg;
+            cfg.set_open_mode('w');
+            return cfg;
+        }(),
+        quill::FileEventNotifier{});
+
+    quill::Logger *logger = quill::Frontend::create_or_get_logger("root", {std::move(console_sink), std::move(file_sink)});
 
     // Change the LogLevel to print everything
     logger->set_log_level(quill::LogLevel::TraceL3);

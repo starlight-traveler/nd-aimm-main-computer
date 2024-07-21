@@ -1,5 +1,5 @@
 #include "runner.h"
-
+#include "console.h"
 
 
 //=================================================================================================
@@ -19,10 +19,6 @@ ImDrawData *AIMMBasic::Draw()
 {
 	//---------------------------------------------------------------------------------------------
 	// (1) Start a new Frame.
-	// Note:	With ImGui 1.81+ NetImgui can automatically intercept Imgui::NewFrame/Render. This
-	//			AIMM does this. For older Imgui releases, please look at 'Client_Draw_ModeAlways'
-	//			in 'AIMMNewFrame' on how to tell NetImgui directly about NewFrame/EndFrame.
-	//			Other AIMMs also avoid the auto intercept to allow drawing only when needed.
 	//---------------------------------------------------------------------------------------------
 	ImGui::NewFrame();
 
@@ -43,7 +39,7 @@ ImDrawData *AIMMBasic::Draw()
 
 	if (drawFlags[DrawFlags::ShowTerminalWindow])
 	{
-		// Implement Terminal Window
+		showAIMMConsole(&drawFlags[DrawFlags::ShowTerminalWindow]);
 	}
 
 	if (drawFlags[DrawFlags::ShowStatusWindow])

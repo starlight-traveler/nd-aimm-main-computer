@@ -3,6 +3,7 @@
 #include <NetImgui_Api.h>
 #include <map>
 #include <string>
+#include <vector>
 #include "ImGuiNotify.h"
 #include "IconsFontAwesome6.h"
 
@@ -72,6 +73,32 @@ public:
 	void DrawStatusWindow(bool *s_open);
 	void TestStatusButton(const char *id, const ImVec4 &color, bool running, int display_counter);
 	void TestStatusColumnsAndOverallHealth(int numPasses, int numWarnings, int numErrors, std::string operationalStatus);
+	void RenderTestRow(std::string category);
+	void DrawGeneralMenu();
+	void DrawPowerMenu();
+	void DrawAll();
+	void DrawPeripherals();
+	void DrawStartup();
+	void DrawRuntime();
+	void DrawFlatbuffers();
+	void DrawLocation();
+	void DrawWaterDetection();
+	void DrawRadioFrequency();
+
+	enum MenuType
+	{
+		General,
+		Power,
+		Peripherals,
+		RadioFrequency,
+		Startup,
+		Runtime,
+		Flatbuffers,
+		Location,
+		WaterDetection
+	};
+
+	MenuType currentMenu = General; // Default to general menu
 
 private:
 	int colorIndex = 0; // To cycle through colors

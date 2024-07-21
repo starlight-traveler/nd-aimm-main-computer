@@ -5,6 +5,7 @@
 #include "runner.h"
 #include "resources/fonts/roboto_medium.cpp"
 #include "ImGuiNotify.h"
+#include "thread_safe_gui_status_logger.h"
 
 //=================================================================================================
 // FontCreationCallback_Default
@@ -285,7 +286,7 @@ std::map<DrawFlags, bool> AIMMClient_Base::Draw_Connect()
 		ImGui::SetCursorPosY(3);
 		if (ImGui::Button(" Terminal "))
 		{
-			showSettingsWindow = !showSettingsWindow; // Toggle the visibility of the info window
+			showTerminalWindow = !showTerminalWindow; // Toggle the visibility of the info window
 		}
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar(2);

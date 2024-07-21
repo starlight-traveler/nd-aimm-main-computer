@@ -1,4 +1,5 @@
 #include "fb_check_t.h"
+#include "aimm_test_manager.h"
 
 using namespace MyGame::Sample;
 
@@ -13,6 +14,7 @@ namespace testing_flatbuffer
         if (!monster)
         {
             LOG_TRACE_L1(logger, "Failed to get monster from buffer.");
+            TestManager::getInstance()->updateTest("flatbuffers", "Flatbuffer General Test", 0, "Failed to retrieve from buffer", ImVec4(1.0, 0.0, 0.0, 1.0), false);
             return false;
         }
 
@@ -20,11 +22,13 @@ namespace testing_flatbuffer
         {
             flatBufferExampleCheck(monster, logger);
             LOG_TRACE_L1(logger, "Monster data verification succeeded.");
+            TestManager::getInstance()->updateTest("flatbuffers", "Flatbuffer General Test", 0, "Flatbuffer verified.", ImVec4(0.0, 1.0, 0.0, 1.0), false);
             return true;
         }
         catch (const std::exception &e)
         {
             LOG_TRACE_L1(logger, "Exception during monster data verification: {}", e.what());
+            TestManager::getInstance()->updateTest("flatbuffers", "Flatbuffer General Test", 0, e.what(), ImVec4(1.0, 0.0, 0.0, 1.0), false);
             return false;
         }
     }

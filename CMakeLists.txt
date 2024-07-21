@@ -63,6 +63,7 @@ if(NOT GIT_SHA1)
     set(GIT_REV "0")
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
 
 # Check if the platform is Windows or Unix-based and set the BUILD_DATE accordingly
 if(WIN32)
@@ -119,6 +120,8 @@ configure_file(
 # option(OPTION_BUILD_DOCS      "Build documentation."                                   OFF)
 # option(OPTION_BUILD_EXAMPLES  "Build examples."                                        OFF)
 option(OPTION_ENABLE_COVERAGE "Add coverage information."                              ON)
+option(SERVER_CONNECT "Connect Without GUI" OFF)
+
 
 #
 # Project Health Check Setup
@@ -136,12 +139,30 @@ enable_coverage(${OPTION_ENABLE_COVERAGE})
 # Add any new find_package() calls here for additional external libraries.
 # This is only for system calls which should be as limited.
 
+# Set the path to the Python executable
+set(Python3_EXECUTABLE "/opt/homebrew/bin/python3")
+
+# Find Python and include its directories
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+include_directories(${Python3_INCLUDE_DIRS})
+
+# Add pybind11
+add_subdirectory(lib/pybind11)
+
 set(imgui_SOURCE_DIR "lib/imgui/")
 
 # Project-wide include directories. Add any new general include directories here.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tests)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/threading)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/movement)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/networking)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/serialization)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui/networking_helper)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui/native)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include the binary directory for version.h
 include_directories(${CMAKE_BINARY_DIR}/models)
 include_directories(${FLATBUFFERS_INCLUDE_DIRS})
@@ -174,6 +195,9 @@ if( GLFW-CMAKE-STARTER-USE-GLFW-GLAD )
     set( GLAD_GL "${GLFW_SOURCE_DIR}/deps/glad/gl.h" )
 endif()
 
+if(HEADLESS)
+  add_definitions(-DHEADLESS)
+endif()
 
 
 
@@ -206,6 +230,22 @@ add_executable(${PROJECT_NAME}
     src/gui/aimm_status.cpp
     src/gui/aimm_settings.cpp
     src/gui/resources/fonts/roboto_medium.cpp
+    src/networking/rns_sender.cpp
+    src/logger/binding.cpp
+    src/networking/rns_manager.cpp
+    src/gui/aimm_status_helper.cpp
+    src/gui/aimm_status_logger.cpp
+    src/gui/aimm_console.cpp
+    src/gui/aimm_test_helper.cpp
+    src/initialization.cpp
+    src/gui/aimm_headless.cpp
+    src/analysis/analysis.cpp
+    src/analysis/finder.cpp
+    src/analysis/normalizer.cpp
+    src/analysis/path_planner.cpp
+    src/analysis/r_tree_querier.cpp
+    src/analysis/r_tree_synthesizer.cpp
+    src/tests/a_star_check_t.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
@@ -221,6 +261,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 
+pybind11_add_module(quill_logger src/logger/binding.cpp)
+target_link_libraries(quill_logger PRIVATE pybind11::module quill::quill Python3::Python)
 
 # Link libraries with the target. 
 # Add new libraries to link against by appending them to this list.
@@ -230,7 +272,8 @@ target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}   # Linking with OpenCV libraries.
         quill::quill     # Logging library.
         flatbuffers
-        glfw 
+        glfw
+        pybind11::embed 
 )
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -260,6 +303,7 @@ endif()
 
 # Set default build type to Release if not specified. 
 # Change this to Debug or another type if needed.
+set(CMAKE_BUILD_TYPE Debug)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()

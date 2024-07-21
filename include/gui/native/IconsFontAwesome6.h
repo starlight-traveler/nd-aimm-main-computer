@@ -17,8 +17,8 @@
  * #define FONT_ICON_FILE_NAME_FAS "../fonts/fa-solid-900.ttf"
 */
 
-#define FONT_ICON_FILE_NAME_FAR "/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/include/gui/fonts/fa-regular-400.ttf"
-#define FONT_ICON_FILE_NAME_FAS "/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/include/gui/fonts/fa-solid-900.ttf"
+#define FONT_ICON_FILE_NAME_FAR "../include/gui/fonts/fa-regular-400.ttf"
+#define FONT_ICON_FILE_NAME_FAS "../include/gui/fonts/fa-solid-900.ttf"
 
 #define ICON_MIN_FA 0xe005
 #define ICON_MAX_16_FA 0xf8ff
