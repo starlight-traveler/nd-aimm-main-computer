@@ -139,6 +139,21 @@ enable_coverage(${OPTION_ENABLE_COVERAGE})
 # Add any new find_package() calls here for additional external libraries.
 # This is only for system calls which should be as limited.
 
+# Conditional package checks for Unix-like systems
+if (UNIX AND NOT APPLE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client>=0.2.7)
+    pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor>=0.2.7)
+    pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl>=0.2.7)
+    pkg_check_modules(XKBCOMMON REQUIRED xkbcommon>=0.5.0)
+endif()
+
+# Including Wayland support
+if (WAYLAND_CLIENT_FOUND AND WAYLAND_CURSOR_FOUND AND WAYLAND_EGL_FOUND AND XKBCOMMON_FOUND)
+    message(STATUS "Wayland support enabled")
+endif()
+
+
 # Set the path to the Python executable
 set(Python3_EXECUTABLE "/opt/homebrew/bin/python3")
 
