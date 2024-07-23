@@ -5,7 +5,8 @@ parts:
   - caption: Starting Out
     numbered: True
     chapters:
-      - file: notebooks/getting-started.ipynb
+      - file: notebooks/building-on-windows-linux.ipynb
+      - file: notebooks/building-on-mac.ipynb
       - file: notebooks/contribution-guidelines.ipynb
       - file: notebooks/code-architecture.ipynb
   - caption: Learning

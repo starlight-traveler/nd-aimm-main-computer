@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "template"
 version = "0.1.0"  # Add this line to specify a static version
-description = "A template Python package from the World Bank Data Lab"
+description = "A template Python package from the NDAIMM Team"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE" }
 keywords = ["template", "reproducibility"]
-authors = [{ name = "Development Data Group", email = "datalab@worldbank.org" }]
+authors = [{ name = "Notre Dame - AIMM Team", email = "ndaimm@nd.edu }]
 classifiers = [
 	"Programming Language :: Python :: 3",
 	"Programming Language :: Python :: 3.7",
@@ -32,9 +32,9 @@ docs = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/worldbank/template"
-"Bug Reports" = "https://github.com/worldbank/template/issues"
-"Source" = "https://github.com/worldbank/template"
+"Homepage" = "null"
+"Bug Reports" = "null"
+"Source" = "null"
 
 [tool.codespell]
 skip = 'docs/_build,docs/references.bib,*.png,*.gz,*.whl'
