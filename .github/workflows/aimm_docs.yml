@@ -12,15 +12,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: recursive  # Ensure submodules are initialized
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
           cache: "pip"
-
-      - name: Run CREATE script
-        run: ./CREATE --install-dependencies    
 
       - name: Install Dependencies
         run: |
@@ -31,12 +29,16 @@ jobs:
       - name: List installed packages
         run: pip list
 
-      - name: Build Jupyter Book Documentation
-        run: jupyter-book build . --config docs/_config.yml --toc docs/_toc.yml
-        working-directory: docs
+      - name: Run CREATE script
+        run: ./CREATE --install-dependencies
 
       - name: Install CMake
         run: sudo apt-get install -y cmake
+
+      - name: Install pybind11
+        run: |
+          pip install pybind11
+          sudo apt-get install -y pybind11-dev
 
       - name: Build Doxygen Documentation
         run: |
@@ -44,6 +46,10 @@ jobs:
           cmake --build build --target doc_doxygen
           mkdir -p docs/doxygen
           cp -r build/docs/* docs/doxygen/
+          
+      - name: Build Jupyter Book Documentation
+        run: jupyter-book build . --config docs/_config.yml --toc docs/_toc.yml
+        working-directory: docs
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
