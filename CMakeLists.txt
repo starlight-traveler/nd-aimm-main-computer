@@ -138,6 +138,7 @@ enable_coverage(${OPTION_ENABLE_COVERAGE})
 # Conditional package checks for Unix-like systems
 if (UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
+    set(ENV{PKG_CONFIG_PATH} "/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/local/lib/pkgconfig")
     pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client>=0.2.7)
     pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor>=0.2.7)
     pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl>=0.2.7)
