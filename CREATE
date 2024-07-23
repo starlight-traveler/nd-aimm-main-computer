@@ -60,7 +60,20 @@ install_linux() {
       lcov \
       doxygen \
       graphviz \
-      expect-dev
+      expect-dev \
+      libwayland-dev \
+      wayland-protocols \
+      libwayland-egl-backend-dev \
+      libxkbcommon-dev \
+      libegl1-mesa-dev \
+      xorg \
+      openbox \
+      libxrandr-dev \
+      libxinerama-dev \
+      libxcursor-dev \
+      libxi-dev \
+      python3.10 \
+      python3.10-dev \
 
   # Install unbuffer (comes with expect-dev package)
   sudo apt-get install -y expect-dev
@@ -81,9 +94,6 @@ install_linux() {
   sudo make install
   cd ..
   rm -rf flatbuffers-${FLATBUFFERS_VERSION} v${FLATBUFFERS_VERSION}.tar.gz
-
-  # Install Earthly
-  sudo apt-get install -y earthly
 
   # Verify installations
   echo "${Yellow}================================================================================${Reset}"

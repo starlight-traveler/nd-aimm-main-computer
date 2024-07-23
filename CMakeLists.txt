@@ -11,6 +11,8 @@ cmake_policy(SET CMP0077 NEW) # option() honors normal variables.
 cmake_policy(SET CMP0120 OLD) # The WriteCompilerDetectionHeader module is removed.
 
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_STANDARD 17)  # You can choose 11, 14, or 17 depending on your needs
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add message color headers
 
@@ -62,8 +64,6 @@ string(SUBSTRING "${GIT_SHA1}" 0 12 GIT_REV)
 if(NOT GIT_SHA1)
     set(GIT_REV "0")
 endif()
-
-set(CMAKE_CXX_STANDARD 17)
 
 # Check if the platform is Windows or Unix-based and set the BUILD_DATE accordingly
 if(WIN32)
@@ -135,10 +135,6 @@ enable_cppcheck(ON)
 enable_clang_tidy(ON)
 enable_coverage(${OPTION_ENABLE_COVERAGE})
 
-# Find packages required by the project. 
-# Add any new find_package() calls here for additional external libraries.
-# This is only for system calls which should be as limited.
-
 # Conditional package checks for Unix-like systems
 if (UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
@@ -154,12 +150,25 @@ if (WAYLAND_CLIENT_FOUND AND WAYLAND_CURSOR_FOUND AND WAYLAND_EGL_FOUND AND XKBC
 endif()
 
 
-# Set the path to the Python executable
-set(Python3_EXECUTABLE "/opt/homebrew/bin/python3")
 
-# Find Python and include its directories
+# Find packages required by the project. 
+# Add any new find_package() calls heres for additional external libraries.
+# This is only for system calls which should be as limited.
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+if(Python3_FOUND)
+    message(STATUS "Found Python3: ${Python3_EXECUTABLE} (found version \"${Python3_VERSION}\")")
+    message(STATUS "Python3 Headers: ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python3 Libraries: ${Python3_LIBRARIES}")
+else()
+    message(FATAL_ERROR "Python3 is not found.")
+endif()
+
+# Include Python headers
 include_directories(${Python3_INCLUDE_DIRS})
+
+# Link Python libraries
+link_libraries(${Python3_LIBRARIES})
 
 # Add pybind11
 add_subdirectory(lib/pybind11)
@@ -272,12 +281,13 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/depthai-core/include
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${Python3_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 
 pybind11_add_module(quill_logger src/logger/binding.cpp)
-target_link_libraries(quill_logger PRIVATE pybind11::module quill::quill Python3::Python)
+target_link_libraries(quill_logger PRIVATE pybind11::module quill::quill ${Python3_LIBRARIES})
 
 # Link libraries with the target. 
 # Add new libraries to link against by appending them to this list.
@@ -289,6 +299,7 @@ target_link_libraries(${PROJECT_NAME}
         flatbuffers
         glfw
         pybind11::embed 
+        ${Python3_LIBRARIES}
 )
 
 target_sources(${PROJECT_NAME} PRIVATE
