@@ -12,21 +12,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
           cache: "pip"
+
       - name: Install Dependencies
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f pyproject.toml ]; then pip install .[docs]; fi  # Install optional docs dependencies
         working-directory: docs
+
       - name: List installed packages
         run: pip list
+
       - name: Build Jupyter Book Documentation
         run: jupyter-book build . --config docs/_config.yml --toc docs/_toc.yml
         working-directory: docs
+
+      - name: Install CMake
+        run: sudo apt-get install -y cmake
+
+      - name: Build Doxygen Documentation
+        run: |
+          cmake -B build
+          cmake --build build --target doc_doxygen
+          mkdir -p docs/doxygen
+          cp -r build/docs/* docs/doxygen/
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && job.status == 'success'
@@ -45,6 +60,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
