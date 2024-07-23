@@ -26,3 +26,6 @@
 [submodule "lib/pybind11"]
 	path = lib/pybind11
 	url = https://github.com/pybind/pybind11.git
+[submodule "runnable/lib/Reticulum"]
+	path = runnable/lib/Reticulum
+	url = https://github.com/markqvist/Reticulum.git
