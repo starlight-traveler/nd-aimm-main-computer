@@ -44,8 +44,8 @@ jobs:
         run: |
           cmake -B build
           cmake --build build --target doc_doxygen
-          mkdir -p docs/doxygen
-          cp -r build/docs/* docs/doxygen/
+          mkdir -p docs/doxygen1
+          cp -r build/docs/* docs/doxygen1/
           
       - name: Build Jupyter Book Documentation
         run: jupyter-book build . --config docs/_config.yml --toc docs/_toc.yml
