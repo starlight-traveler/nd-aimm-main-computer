@@ -15,7 +15,7 @@ parts:
       - file: notebooks/learning-cv.ipynb
   - caption: Additional Resources
     chapters:
-      - url: https://learngitbranching.js.org/?locale=en_US
+      - url: https://starlight-traveler.github.io/nd-aimm-main-computer/doxygen/html/index.html
         title: NDAIMM Main Computer Doxygen
       - url: https://learngitbranching.js.org/?locale=en_US
         title: Learning Git

@@ -105,7 +105,7 @@ int main()
   signal(SIGINT, signalHandler);
 
   // Must set enviornment path for pybind11, must happen befpre the python interpreter
-  setenv("PYTHONPATH", "/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/runnable/", 1);
+  setenv("PYTHONPATH", "../runnable/", 1);
 
   // Start the python interpreter
   py::scoped_interpreter guard{};
