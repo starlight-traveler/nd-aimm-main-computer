@@ -1,19 +1,18 @@
-<a name="readme-top"></a>
-
+`<a name="readme-top"></a>`
 
 <!-- PROJECT SHIELDS -->
 
-
 <!-- PROJECT LOGO -->
+
 <br />
 <div align="center">
   <a href="https://github.com/starlight-traveler/nd-aimm-main-computer">
     <img src="docs/docs/images/logo.png" alt="Logo" width="120" height="120">
   </a>
 
-  <h3 align="center">ND AIMM Main Computer Repository</h3>
+<h3 align="center">ND AIMM Main Computer Repository</h3>
 
-  <p align="center">
+<p align="center">
     By: The Notre Dame Artifical Intelligence Team
     <br />
     <a href="https://starlight-traveler.github.io/nd-aimm-main-computer/README.html"><strong>Explore the docs »</strong></a>
@@ -25,9 +24,8 @@
   </p>
 </div>
 
-
-
 <!-- TABLE OF CONTENTS -->
+
 <details>
   <summary>Table of Contents</summary>
   <ol>
@@ -47,16 +45,13 @@
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
+
 ## About The Project
 
 Please see the documentation below for further information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 ### Built With
 
@@ -69,23 +64,21 @@ These are the major frameworks/libraries used to bootstrap the project:
 * ![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
 * ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- GETTING STARTED -->
+
 ## Getting Started
 
 Please review the getting started documentation at [Getting Started](https://starlight-traveler.github.io/nd-aimm-main-computer/README.html).
 
-
 <!-- ROADMAP -->
+
 ## Roadmap
 
-- [ ] Add documentation
-- [ ] Finish flatbuffers
-- [ ] Add C++ OpenCV support
+- [X] Add documentation
+- [X] Finish flatbuffers
+- [X] Add C++ OpenCV support
 - [ ] Merge Yolov8 & depth fusion
 - [ ] Add Kalman Filter support to fusion algorithm
 - [ ] SLAM
@@ -94,9 +87,8 @@ See the [open issues](https://github.com/starlight-traveler/nd-aimm-main-compute
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTRIBUTING -->
+
 ## Contributing
 
 Contributions are key to this project to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -108,34 +100,31 @@ If you have a suggestion that would make this better, please fork the repo and c
 In case you forgot...
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+2. Create your Feature Branch
+3. Commit your Changes
+4. Push to the Branch
 5. Open a Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- LICENSE -->
+
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTACT -->
+
 ## Contact
 
 Project Link: [https://github.com/starlight-traveler/nd-aimm-main-computer/](https://github.com/starlight-traveler/nd-aimm-main-computer/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- ACKNOWLEDGMENTS -->
+
 ## Acknowledgments
 
 No acknowledgements at this time.
@@ -152,10 +141,10 @@ No acknowledgements at this time.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- MARKDOWN LINKS & IMAGES -->
+
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
 [contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
 [contributors-url]: https://github.com/starlight-traveler/nd-aimm-main-computer/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
@@ -184,4 +173,4 @@ No acknowledgements at this time.
 [Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
 [Bootstrap-url]: https://getbootstrap.com
 [JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 
+[JQuery-url]: https://jquery.com
