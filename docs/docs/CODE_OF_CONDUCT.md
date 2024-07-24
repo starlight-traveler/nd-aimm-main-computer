@@ -59,9 +59,7 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[github@worldbank.org](mailto:github@worldbank.org)
-All complaints will be reviewed and investigated promptly and fairly.
+reported. All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.
@@ -115,5 +113,5 @@ the community.
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org),
-version 2.0. Community Impact Guidelines were inspired by [Mozilla's code of conduct
+version 2.0. Community Impact Guidelines were inspired by [Mozilla&#39;s code of conduct
 enforcement ladder](https://github.com/mozilla/diversity).

@@ -3,7 +3,7 @@ root: README
 
 parts:
   - caption: Starting Out
-    numbered: True
+    numbered: False
     chapters:
       - file: notebooks/building-on-windows-linux.ipynb
       - file: notebooks/building-on-mac.ipynb
