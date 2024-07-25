@@ -153,7 +153,8 @@ int main()
   ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataQueueNetwork;
 
   // ----- Camera Threads----- //
-  std::thread camera_thread(run_with_retry, logger, std::ref(displayQueue));
+  std::thread camera_thread([&]()
+                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
   // TODO: Camera thread #1
   // TODO: Camera thread #2
   // TODO: Camera thread #3
@@ -195,7 +196,7 @@ int main()
    * @fn network_sender will not return
    */
 
-  camera_thread.join();
+  // camera_thread.join();
   // log_thread.join();
   // network_sender.join();
 

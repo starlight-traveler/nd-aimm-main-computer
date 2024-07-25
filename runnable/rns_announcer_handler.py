@@ -6,7 +6,7 @@ import sys
 
 APP_NAME = "aimm"
 
-sys.path.insert(0, '../build')
+sys.path.insert(0, '/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/build')
 
 import quill_logger
 

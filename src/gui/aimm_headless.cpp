@@ -75,7 +75,7 @@ namespace AIMMNoBackend
         constexpr char zClientName[] = "AIMM GUI";
         if (AIMMState == eAIMMState::Start)
         {
-            LOG_TRACE_L2(logger, "Connecting to NetImguiServer to (127.0.0.1:8888)... ");
+            LOG_INFO(logger, "Connecting to NetImguiServer to (127.0.0.1:8888)... ");
             NetImgui::ConnectToApp(zClientName, "localhost");
             while (NetImgui::IsConnectionPending())
                 ;
@@ -83,7 +83,7 @@ namespace AIMMNoBackend
             AIMMState = bSuccess ? eAIMMState::Connected : eAIMMState::Disconnected;
             if (!bSuccess)
             {
-                LOG_TRACE_L2(logger, "Waiting for a connection from NetImguiServer on port 8889... ");
+                LOG_INFO(logger, "Waiting for a connection from NetImguiServer on port 8889... ");
                 NetImgui::ConnectFromApp(zClientName);
             }
         }

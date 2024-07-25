@@ -1,6 +1,15 @@
-#include "logger.h"
-#include "pipeline.h"
-#include "thread_safe_queue.h"
+#ifndef THREADING_H
+#define THREADING_H
 
-void log_increment(std::atomic<int> &x, quill::Logger *logger);
-void run_with_retry(quill::Logger *logger, ThreadSafeQueue<cv::Mat> &displayQueue);
+#include "logger.h"
+#include <functional>
+#include <chrono>
+#include <thread>
+
+// Define a template function to run any function with retries
+template <typename Func, typename... Args>
+void threaded(quill::Logger *logger, int retry_delay_sec, Func func, Args &&...args);
+
+#include "threading.tpp" // Include the template implementation
+
+#endif // THREADING_H

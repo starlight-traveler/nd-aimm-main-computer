@@ -122,9 +122,9 @@ void MapSearchNode::PrintNodeInfo()
 {
     const int strSize = 100;
     char str[strSize];
-    snprintf(str, strSize, "Node position : (%d,%d)\n", x, y);
+    // snprintf(str, strSize, "Node position : (%d,%d)\n", x, y);
 
-    cout << str;
+    // cout << str;
 }
 
 // Here's the heuristic function that estimates the distance from a Node

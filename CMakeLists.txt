@@ -247,7 +247,6 @@ add_executable(${PROJECT_NAME}
     src/pipeline/inference.cpp
     src/serialization/serialFactory.cpp
     src/serialization/serializerExample.cpp
-    src/threading.cpp
     src/tests/fb_check_t.cpp
     src/tests/peripherals_t.cpp
     src/gui/gui.cpp
