@@ -41,6 +41,7 @@ Use it well.
 #include "flatbuffers/flatbuffers.h"
 #include "quill/LogMacros.h"
 #include <pybind11/embed.h>
+#include <csignal>
 
 // Userland headers
 #include "version.h"
@@ -55,7 +56,6 @@ Use it well.
 #include "thread_safe_queue.h"
 #include "thread_safe_queue_network.h"
 #include "rns_sender.h"
-#include <csignal>
 #include "rns_manager.h"
 #include "ring_buffer.h"
 #include "initializer.h"
