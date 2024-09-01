@@ -3,8 +3,8 @@
 
 #include "quill/Logger.h"
 #include "depthai/depthai.hpp"
-#include "inference.h"
-#include "thread_safe_queue.h"
+#include "inference.hpp"
+#include "thread_safe_queue.hpp"
 
 extern int setup_pipeline(quill::Logger *logger);
 void orchestrationThreadLRCamera(quill::Logger *logger, ThreadSafeQueue<cv::Mat> &displayQueue);

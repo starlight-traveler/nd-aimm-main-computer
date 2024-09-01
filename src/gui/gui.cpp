@@ -25,7 +25,7 @@
 #include <GLES2/gl2.h>
 #endif
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
-#include "thread_safe_gui_status_logger.h"
+#include "thread_safe_gui_status_logger.hpp"
 #include "aimm_test_manager.h"
 #include "aimm_test_detail.h"
 #include "aimm_headless.h"

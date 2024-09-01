@@ -1,5 +1,5 @@
 #include "runner.h"
-#include "thread_safe_gui_status_logger.h"
+#include "thread_safe_gui_status_logger.hpp"
 
 void AIMMBasic::DrawStatusWindow(bool *s_open)
 {

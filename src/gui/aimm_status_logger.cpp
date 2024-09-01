@@ -1,4 +1,4 @@
-#include "thread_safe_gui_status_logger.h"
+#include "thread_safe_gui_status_logger.hpp"
 
 // Initialize static members
 StatusLogger *StatusLogger::instance = nullptr;

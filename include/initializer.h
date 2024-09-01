@@ -1,7 +1,7 @@
 #ifndef INITIALIZER_H
 #define INITIALIZER_H
 
-#include "thread_safe_gui_status_logger.h"
+#include "thread_safe_gui_status_logger.hpp"
 #include "aimm_test_manager.h"
 #include "aimm_test_detail.h"
 

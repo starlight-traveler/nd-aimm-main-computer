@@ -122,7 +122,7 @@ dai::Pipeline setupPipeline(quill::Logger *logger)
     // These are the linker processes
     linkStereoDepthNodes(leftCamera, rightCamera, centerCamera, stereoDepth, xout_stereoDepth, xout_rawCamera, logger);
 
-    LOG_TRACE_L3(logger, "Finished setting up the stereo nodes linker.");
+    LOG_TRACE_L3(logger, "Finished setting up sthe stereo nodes linker.");
 
     linkSpatialCalculationNodes(stereoDepth, spatialDataCalculator, xout_SpatialData, pipeline);
 

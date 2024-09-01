@@ -8,7 +8,7 @@
 #include "test_generated.h"
 #include <vector>
 #include <string>
-#include "thread_safe_queue_network.h"
+#include "thread_safe_queue_network.hpp"
 
 void send_data(const std::string &destination_hexhash, const std::string &configpath, const std::string &text);
 void rns_sender_manager(ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> &dataQueue);

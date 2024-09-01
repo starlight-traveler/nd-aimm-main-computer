@@ -178,22 +178,24 @@ add_subdirectory(lib/pybind11)
 set(imgui_SOURCE_DIR "lib/imgui/")
 
 # Project-wide include directories. Add any new general include directories here.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tests)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/threading)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/movement)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/networking)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/serialization)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui/networking_helper)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/gui/native)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}) # Include the binary directory for version.h
-include_directories(${CMAKE_BINARY_DIR}/models)
-include_directories(${FLATBUFFERS_INCLUDE_DIRS})
-include_directories(${imgui_SOURCE_DIR})
-
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/gui
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/threading
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/listener
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/movement
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/networking
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/serialization
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/gui/networking_helper
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/gui/native
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}/models
+    ${FLATBUFFERS_INCLUDE_DIRS}
+    ${imgui_SOURCE_DIR}
+)
 
 # Adding external dependencies located in the 'lib' directory. 
 # To add new libraries, create a subdirectory in 'lib' and use add_subdirectory() here.
@@ -271,6 +273,8 @@ add_executable(${PROJECT_NAME}
     src/analysis/r_tree_querier.cpp
     src/analysis/r_tree_synthesizer.cpp
     src/tests/a_star_check_t.cpp
+    src/emergency.cpp
+    src/listeners/shutdown_listener.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )

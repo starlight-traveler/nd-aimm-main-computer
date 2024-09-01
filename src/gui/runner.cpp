@@ -5,7 +5,7 @@
 #include "runner.h"
 #include "resources/fonts/roboto_medium.cpp"
 #include "ImGuiNotify.h"
-#include "thread_safe_gui_status_logger.h"
+#include "thread_safe_gui_status_logger.hpp"
 
 //=================================================================================================
 // FontCreationCallback_Default

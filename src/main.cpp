@@ -49,16 +49,17 @@ Use it well.
 #include "pipeline.h"
 #include "udp.h"
 #include "peripherals.h"
-#include "inference.h"
+#include "inference.hpp"
 #include "serializer_factory.h"
 #include "threading.h"
 #include "example_generated.h"
-#include "thread_safe_queue.h"
-#include "thread_safe_queue_network.h"
+#include "thread_safe_queue.hpp"
+#include "thread_safe_queue_network.hpp"
 #include "rns_sender.h"
 #include "rns_manager.h"
 #include "ring_buffer.h"
 #include "initializer.h"
+#include "event_bus.hpp"
 
 // Test headers
 #include "fb_check_t.h"
@@ -71,11 +72,16 @@ typedef RTree<int *, double, 3> MyTree;
 
 namespace py = pybind11;
 
+/**
+ * @brief Setup Signal Handlers
+ * 
+ * @param signum 
+ */
+
 void signalHandler(int signum)
 {
   std::cout << "Interrupt signal (" << signum << ") received.\n";
-  // Cleanup and close up stuff here
-  // Terminate program
+
   exit(signum);
 }
 
@@ -101,13 +107,12 @@ int main()
 
   // ----- Must Happen Before Runtime ----- //
 
-  // Signal handler needed or CTRL-C does not work as intended
-  signal(SIGINT, signalHandler);
+  std::signal(SIGINT, signalHandler);
+  std::signal(SIGTERM, signalHandler);
+  std::signal(SIGSEGV, signalHandler);
 
-  // Must set enviornment path for pybind11, must happen befpre the python interpreter
+  // Python Handler
   setenv("PYTHONPATH", "../runnable/", 1);
-
-  // Start the python interpreter
   py::scoped_interpreter guard{};
 
   /**
@@ -117,18 +122,15 @@ int main()
    * the signletons that need to be fired once.
    */
   quill::Logger *logger = initialize_logger();
-
+  
   LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
   LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
 
   // ----- Non-Threaded ----- //
 
   primary_initialization();
-  // secondary_initialization();
-  // tertiary_initialization();
 
-  // FIXME: RNS sender keeping log of where it was at with no interface
-  // connected
+  // FIXME: RNS sender
   rns_sender_manager(logger);
   py::gil_scoped_release release;
 
@@ -149,12 +151,19 @@ int main()
    */
 
   // ----- Threading Structures ----- //
+
+  // Event Bus
+  EventBus eventBus;
+
+  // Threading
   ThreadSafeQueue<cv::Mat> displayQueue;
-  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataQueueNetwork;
+
+  // RNS Sender
+  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNewtwork;
 
   // ----- Camera Threads----- //
   std::thread camera_thread([&]()
-                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
+                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, displayQueue); }); 
   // TODO: Camera thread #1
   // TODO: Camera thread #2
   // TODO: Camera thread #3
@@ -170,12 +179,17 @@ int main()
 
   // std::thread log_thread(log_increment, std::ref(x), logger);
   // FIXME: std::thread network_sender([&]()
-  //                           { rns_sender_manager(dataQueueNetwork); });
+  //                           { rns_sender_manager(dataNetwork); });
 
   // TODO: Perhipheral manager thread
   // TODO: Heartbeat thread
-  // TODO: Emergency Shutoff Manager thread
+
+  std::thread emergency_shutoff([&]()
+                                { threaded(logger, 5, 3, shutdown, logger, std::ref(events)); });
   
+
+  eventBus.publish("EMERGENCY_SHUTDOWN");
+
 
   /**
    * @brief GUI Entrance

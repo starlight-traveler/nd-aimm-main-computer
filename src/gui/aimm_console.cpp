@@ -1,7 +1,7 @@
 
 #include "runner.h"
 #include "console.h"
-#include "logger_monitor.h"
+#include "logger_monitor.hpp"
 
 #include "quill/Backend.h"
 #include "quill/Frontend.h"
