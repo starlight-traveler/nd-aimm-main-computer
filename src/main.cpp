@@ -41,6 +41,7 @@ Use it well.
 #include "flatbuffers/flatbuffers.h"
 #include "quill/LogMacros.h"
 #include <pybind11/embed.h>
+#include <dexode/EventBus.hpp>
 #include <csignal>
 
 // Userland headers
@@ -59,7 +60,9 @@ Use it well.
 #include "rns_manager.h"
 #include "ring_buffer.h"
 #include "initializer.h"
-#include "event_bus.hpp"
+#include "emergency.h"
+#include "events.h"
+#include "emergency_listener.h"
 
 // Test headers
 #include "fb_check_t.h"
@@ -68,9 +71,15 @@ Use it well.
 
 #include "gui.h"
 #include "r_tree.h"
+
+// Set namespaces, typedefs, and usings
+
 typedef RTree<int *, double, 3> MyTree;
 
 namespace py = pybind11;
+
+using EventBus = dexode::EventBus;
+using Listener = dexode::EventBus::Listener;
 
 /**
  * @brief Setup Signal Handlers
@@ -122,7 +131,10 @@ int main()
    * the signletons that need to be fired once.
    */
   quill::Logger *logger = initialize_logger();
-  
+
+  auto eventBus = std::make_shared<EventBus>();
+  auto listener = std::make_shared<EmergencyListener>(logger, eventBus);
+
   LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
   LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
 
@@ -131,7 +143,7 @@ int main()
   primary_initialization();
 
   // FIXME: RNS sender
-  rns_sender_manager(logger);
+  // rns_sender_manager(logger);
   py::gil_scoped_release release;
 
   /**
@@ -152,18 +164,16 @@ int main()
 
   // ----- Threading Structures ----- //
 
-  // Event Bus
-  EventBus eventBus;
-
   // Threading
   ThreadSafeQueue<cv::Mat> displayQueue;
 
   // RNS Sender
-  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNewtwork;
+  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
+
 
   // ----- Camera Threads----- //
   std::thread camera_thread([&]()
-                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, displayQueue); }); 
+                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
   // TODO: Camera thread #1
   // TODO: Camera thread #2
   // TODO: Camera thread #3
@@ -178,17 +188,32 @@ int main()
   // ----- Misc. Threads ----- //
 
   // std::thread log_thread(log_increment, std::ref(x), logger);
+
   // FIXME: std::thread network_sender([&]()
   //                           { rns_sender_manager(dataNetwork); });
 
+  std::thread events([&]()
+                    { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
+
+  // LOG_INFO(logger, "Events thread on!");                  
+
+     std::thread emergency([&listener, &eventBus]() {
+        // Here, the listener simply exists and does its job in the background
+        while (listener) {  // Check if listener is still alive
+            eventBus->process();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate work and prevent tight loop
+        }
+    });
+
+
+  LOG_INFO(logger, "Emergency thread on!");
+
+        eventBus->postpone(event::EmergencyShutoff{});
+	      eventBus->process();
+
+
   // TODO: Perhipheral manager thread
   // TODO: Heartbeat thread
-
-  std::thread emergency_shutoff([&]()
-                                { threaded(logger, 5, 3, shutdown, logger, std::ref(events)); });
-  
-
-  eventBus.publish("EMERGENCY_SHUTDOWN");
 
 
   /**

@@ -184,7 +184,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/gui
     ${CMAKE_CURRENT_SOURCE_DIR}/include/threading
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/listener
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/listeners
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/movement
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree
     ${CMAKE_CURRENT_SOURCE_DIR}/include/networking
@@ -199,8 +199,21 @@ include_directories(
 
 # Adding external dependencies located in the 'lib' directory. 
 # To add new libraries, create a subdirectory in 'lib' and use add_subdirectory() here.
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/depthai-core EXCLUDE_FROM_ALL)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/quill)
+# Add the depthai-core library
+add_subdirectory(
+    ${CMAKE_CURRENT_LIST_DIR}/lib/depthai-core
+    EXCLUDE_FROM_ALL
+)
+
+# Add the quill library
+add_subdirectory(
+    ${CMAKE_CURRENT_LIST_DIR}/lib/quill
+)
+
+# Add the eventbus library
+add_subdirectory(
+    ${CMAKE_CURRENT_LIST_DIR}/lib/eventbus/lib
+)
 
 # Project declaration must be after the Hunter Cmake build system.
 project(AIMM LANGUAGES CXX)
@@ -274,7 +287,8 @@ add_executable(${PROJECT_NAME}
     src/analysis/r_tree_synthesizer.cpp
     src/tests/a_star_check_t.cpp
     src/emergency.cpp
-    src/listeners/shutdown_listener.cpp
+    src/events.cpp
+    src/listeners/emergency_listener.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
@@ -304,6 +318,7 @@ target_link_libraries(${PROJECT_NAME}
         flatbuffers
         glfw
         pybind11::embed 
+        Dexode::EventBus
         ${Python3_LIBRARIES}
 )
 

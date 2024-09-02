@@ -1,9 +1,12 @@
 #ifndef SHUTDOWN_H
 #define SHUTDOWN_H
 
-#include "event_bus.h"
 #include "logger.h"
 
-void shutdown(quill::Logger *logger, EventBus &bus);
+namespace event {
+    struct EmergencyShutoff {};
+}
+
+void shutdown(quill::Logger* logger);
 
 #endif // SHUTDOWN_H

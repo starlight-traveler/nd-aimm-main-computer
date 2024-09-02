@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <future>
+#include "logger.h"
 
 template <typename Func, typename... Args>
 void threaded(quill::Logger *logger, int retry_delay_sec, int max_retries, Func func, Args &&...args)

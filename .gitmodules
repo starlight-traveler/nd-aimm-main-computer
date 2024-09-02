@@ -29,3 +29,6 @@
 [submodule "runnable/lib/Reticulum"]
 	path = runnable/lib/Reticulum
 	url = https://github.com/markqvist/Reticulum.git
+[submodule "lib/eventbus"]
+	path = lib/eventbus
+	url = https://github.com/gelldur/EventBus.git
