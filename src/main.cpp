@@ -187,30 +187,16 @@ int main()
 
   // ----- Misc. Threads ----- //
 
-  // std::thread log_thread(log_increment, std::ref(x), logger);
-
   // FIXME: std::thread network_sender([&]()
   //                           { rns_sender_manager(dataNetwork); });
 
   std::thread events([&]()
-                    { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
+                    { threaded(logger, 5, 3, event_processor, eventBus); });
 
-  // LOG_INFO(logger, "Events thread on!");                  
+  std::thread emergency([&]()
+                    { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
-     std::thread emergency([&listener, &eventBus]() {
-        // Here, the listener simply exists and does its job in the background
-        while (listener) {  // Check if listener is still alive
-            eventBus->process();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate work and prevent tight loop
-        }
-    });
-
-
-  LOG_INFO(logger, "Emergency thread on!");
-
-        eventBus->postpone(event::EmergencyShutoff{});
-	      eventBus->process();
-
+  eventBus->postpone(event::EmergencyShutoff{});
 
   // TODO: Perhipheral manager thread
   // TODO: Heartbeat thread

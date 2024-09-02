@@ -1,4 +1,3 @@
-#include "emergency_listener.h"
 #include "emergency.h"
 #include <iostream>
 
