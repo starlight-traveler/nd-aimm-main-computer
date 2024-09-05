@@ -1,3 +1,4 @@
+#include "events.h"
 #include "emergency.h"
 #include <iostream>
 

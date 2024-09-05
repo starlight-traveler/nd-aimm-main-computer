@@ -18,8 +18,9 @@ struct RNSData {
 void initializeNodes();
 RNSData getRNSData(const std::string& nodeName);
 void printNodeStatuses(quill::Logger *logger);
-void rns_sender_manager(quill::Logger *logger);
 void verify_connection(const std::string &hexadecimal, quill::Logger *logger);
 std::string getRNSHexID(const std::string &nodeName);
+void rnsd_dameon(quill::Logger *logger);
+void rns_sender_manager(quill::Logger *logger);
 
 #endif // RNS_MANAGER_H

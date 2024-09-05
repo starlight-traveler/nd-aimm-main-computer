@@ -215,6 +215,11 @@ add_subdirectory(
     ${CMAKE_CURRENT_LIST_DIR}/lib/eventbus/lib
 )
 
+# Add the eventbus library
+add_subdirectory(
+    ${CMAKE_CURRENT_LIST_DIR}/lib/subprocess
+)
+
 # Project declaration must be after the Hunter Cmake build system.
 project(AIMM LANGUAGES CXX)
 
@@ -319,6 +324,7 @@ target_link_libraries(${PROJECT_NAME}
         glfw
         pybind11::embed 
         Dexode::EventBus
+        subprocess
         ${Python3_LIBRARIES}
 )
 

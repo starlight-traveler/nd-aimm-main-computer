@@ -5,12 +5,45 @@
 #include <mutex>
 #include <thread>
 #include <pybind11/embed.h>
+#include "subprocess.hpp"
 #include "logger.h"
 #include "quill/LogMacros.h"
+#include "threading.tpp"
+
+using subprocess::CompletedProcess;
+using subprocess::PipeOption;
+using subprocess::Popen;
+using subprocess::RunBuilder;
 
 namespace py = pybind11;
 
 // FIXME: RNS Node system does not take into account hash tables
+
+/**
+ * @brief RNS Start Manager
+ * 
+ */
+
+void rnsd_dameon(quill::Logger *logger) {
+
+    Popen popen = subprocess::RunBuilder({"rnsd"})
+                      .cout(PipeOption::pipe)
+                      .popen();
+        
+}
+
+/**
+ * @brief RNS Reciever Manager
+ * 
+ */
+
+
+
+
+/**
+ * @brief RNS Sender Manager
+ * 
+ */
 
 // Define a structure for node data
 struct RNSData
@@ -115,6 +148,7 @@ void printNodeStatuses(quill::Logger *logger)
         LOG_INFO(logger, "Node: {} - HexID: {} - RoutingID: {} - Online: {}", data.name, data.hexID, data.routingID, data.online);
     }
 }
+
 
 void rns_sender_manager(quill::Logger *logger)
 {

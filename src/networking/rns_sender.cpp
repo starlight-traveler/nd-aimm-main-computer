@@ -32,7 +32,7 @@ void send_data(const std::string &destination_hexhash, const std::string &config
     }
 }
 
-void rns_sender_manager(ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> &dataQueue)
+void rns_sender_manager_threaded(ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> &dataQueue)
 {
     py::gil_scoped_acquire acquire; // Acquire the GIL since we are using Python
     while (true)

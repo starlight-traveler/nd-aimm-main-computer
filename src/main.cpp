@@ -72,9 +72,10 @@ Use it well.
 #include "gui.h"
 #include "r_tree.h"
 
-// Set namespaces, typedefs, and usings
-
-typedef RTree<int *, double, 3> MyTree;
+/**
+ * @brief Set namespaces, typedefs, and usings
+ * 
+ */
 
 namespace py = pybind11;
 
@@ -114,7 +115,7 @@ void signalHandler(int signum)
 int main()
 {
 
-  // ----- Must Happen Before Runtime ----- //
+  // ----- Pre-execution Runtime Initialization Phase ----- //
 
   std::signal(SIGINT, signalHandler);
   std::signal(SIGTERM, signalHandler);
@@ -130,20 +131,26 @@ int main()
    * Initializes the system logger to capture and log system events. Initializes
    * the signletons that need to be fired once.
    */
+
+  // Initalize logger
   quill::Logger *logger = initialize_logger();
 
+  // Initalize Events
   auto eventBus = std::make_shared<EventBus>();
   auto listener = std::make_shared<EmergencyListener>(logger, eventBus);
 
+  // What is the current build?
   LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
   LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
 
-  // ----- Non-Threaded ----- //
+  // ----- Single-Threaded Execution Context ----- //
 
   primary_initialization();
 
   // FIXME: RNS sender
+  // rns_start_manager(logger);
   // rns_sender_manager(logger);
+  // rns_reciever_manager(logger);
   py::gil_scoped_release release;
 
   /**
@@ -162,7 +169,7 @@ int main()
    * This section will start all the necessary threads, seperated in grouping
    */
 
-  // ----- Threading Structures ----- //
+  // ----- Multi-Threaded Execution Structures ----- //
 
   // Threading
   ThreadSafeQueue<cv::Mat> displayQueue;
@@ -170,33 +177,33 @@ int main()
   // RNS Sender
   ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
 
+  // ----- Multi-Threaded Execution Context ----- //
 
-  // ----- Camera Threads----- //
+  // Camera Threads
   std::thread camera_thread([&]()
                             { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
-  // TODO: Camera thread #1
-  // TODO: Camera thread #2
-  // TODO: Camera thread #3
-  // TODO: Camera thread #4
-  // TODO: Camera thread #5
 
-  // ----- Worker ----- //
+  // Worker
   // TODO: Spatial Analysis thread
   // TODO: Spatial Actor thread
   // TODO: MavLink Command Forwarder
 
-  // ----- Misc. Threads ----- //
+  // Misc
 
-  // FIXME: std::thread network_sender([&]()
-  //                           { rns_sender_manager(dataNetwork); });
+  std::thread network_dameon([&]()
+                     { threaded(logger, 5, 3, rnsd_dameon, logger); });
 
-  std::thread events([&]()
-                    { threaded(logger, 5, 3, event_processor, eventBus); });
+  std::thread network_sender([&]()
+                     { threaded(logger, 5, 3, rns_sender_manager, logger); });
+
+  std::thread events([&]() 
+                    { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
 
   std::thread emergency([&]()
                     { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
-  eventBus->postpone(event::EmergencyShutoff{});
+  // std::thread heartbeat([&]()
+  //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });                 
 
   // TODO: Perhipheral manager thread
   // TODO: Heartbeat thread
@@ -210,6 +217,7 @@ int main()
    * should be done in a threaded manner.
    */
 
+  // GUI
   entrance(logger);
 
   /**
@@ -221,11 +229,10 @@ int main()
    * @fn network_sender will not return
    */
 
-  // camera_thread.join();
-  // log_thread.join();
-  // network_sender.join();
+  camera_thread.join();
+  network_sender.join();
 
-    return 0;
+  return 0;
 }
 
 /*

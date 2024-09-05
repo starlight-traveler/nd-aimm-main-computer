@@ -32,3 +32,6 @@
 [submodule "lib/eventbus"]
 	path = lib/eventbus
 	url = https://github.com/gelldur/EventBus.git
+[submodule "lib/subprocess"]
+	path = lib/subprocess
+	url = https://github.com/benman64/subprocess.git
