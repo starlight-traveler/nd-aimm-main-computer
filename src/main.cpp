@@ -147,10 +147,6 @@ int main()
 
   primary_initialization();
 
-  // FIXME: RNS sender
-  // rns_start_manager(logger);
-  // rns_sender_manager(logger);
-  // rns_reciever_manager(logger);
   py::gil_scoped_release release;
 
   /**
@@ -159,6 +155,7 @@ int main()
    * All tests should run to make sure no threading issues or post-compilation
    * issues occur.
    */
+
   testing_flatbuffer::flatBufferGeneralTest(logger);
   testing_peripherals::peripheralTest(logger);
   testing_a_star::a_star_runner(logger);
@@ -191,10 +188,10 @@ int main()
   // Misc
 
   std::thread network_dameon([&]()
-                     { threaded(logger, 5, 3, rnsd_dameon, logger); });
+                    { threaded(logger, 5, 3, rnsd_dameon, logger); });
 
   std::thread network_sender([&]()
-                     { threaded(logger, 5, 3, rns_sender_manager, logger); });
+                    { threaded(logger, 5, 3, rns_sender_manager, logger); });
 
   std::thread events([&]() 
                     { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });

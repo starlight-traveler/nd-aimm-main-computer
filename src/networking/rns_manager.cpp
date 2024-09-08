@@ -24,12 +24,27 @@ namespace py = pybind11;
  * 
  */
 
-void rnsd_dameon(quill::Logger *logger) {
-
-    Popen popen = subprocess::RunBuilder({"rnsd"})
+void rnsd_dameon(quill::Logger *logger)
+{
+    // Start the rnsd subprocess with output piped
+    Popen popen = RunBuilder({"rnsd"})
                       .cout(PipeOption::pipe)
                       .popen();
-        
+
+    // Buffer to store the output
+    char buf[1024];
+
+    // Read from the output pipe until there's no more data
+    size_t bytes_read = 0;
+    while ((bytes_read = subprocess::pipe_read(popen.cout, buf, sizeof(buf) - 1)) > 0)
+    {
+        buf[bytes_read] = '\0';           // Null-terminate the string
+        LOG_INFO(logger, "RNSD: {}", buf); 
+        std::memset(buf, 0, sizeof(buf)); // Clear the buffer
+    }
+
+    // // Close the process and handle cleanup
+    // popen.close();
 }
 
 /**
