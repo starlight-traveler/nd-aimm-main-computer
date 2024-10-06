@@ -24,4 +24,5 @@ void updateSpatialCalcConfig(dai::SpatialLocationCalculatorConfigData &config, s
 void processFrames(std::shared_ptr<dai::DataOutputQueue> depthQueue, std::shared_ptr<dai::DataOutputQueue> spatialCalcQueue, std::shared_ptr<dai::DataOutputQueue> rgbQueue, std::shared_ptr<dai::DataInputQueue> spatialCalcConfigInQueue, Inference inf, ThreadSafeQueue<cv::Mat> &displayQueue, quill::Logger *logger);
 float getDepthFromBox(const cv::Rect &box, const cv::Mat &depthFrame, const cv::Mat &frame, std::shared_ptr<dai::SpatialLocationCalculatorData> spatialDataPtr, quill::Logger *logger);
 
+void caller();
 #endif // PIPELINE_SETUP_H

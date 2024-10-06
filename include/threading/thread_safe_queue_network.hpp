@@ -11,7 +11,7 @@ class ThreadSafeQueueNetwork
 {
 private:
     std::queue<T> queue;
-    std::mutex mutex;
+    mutable std::mutex mutex;
     std::condition_variable cond_var;
 
 public:

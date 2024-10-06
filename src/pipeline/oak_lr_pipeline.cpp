@@ -15,15 +15,18 @@ bool extended_disparity = true; // Use extended disparity range (increases resol
 bool subpixel = true;           // Enable sub-pixel accuracy in disparity map
 bool lr_check = false;          // Enable left-right consistency check
 bool enabledRectified = false;  // Enable rectified images (unused in this code)
-
 auto topLeft = dai::Point2f(0.4, 0.4);
 auto bottomRight = dai::Point2f(0.6, 0.6);
+
+void caller() {
+
+}
 
 void orchestrationThreadLRCamera(quill::Logger *logger, ThreadSafeQueue<cv::Mat> &displayQueue)
 {
 
     // Yolo model inferencing, if this fails what is the point in setting up anything else?
-    Inference inf("../src/models/yolov8m.onnx", cv::Size(640, 480), "classes.txt", false);
+    Inference inf("../src/models/yolov8mOp11.onnx", cv::Size(300, 300), "classes.txt", false);
 
     // Setup pipeline and linker
     dai::Pipeline pipeline = setupPipeline(logger);

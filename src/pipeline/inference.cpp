@@ -32,7 +32,7 @@ std::vector<Detection> Inference::runInference(const cv::Mat &input)
     // yolov8 has an output of shape (batchSize, 84,  8400) (Num classes + box[x,y,w,h])
     if (dimensions > rows) // Check if the shape[2] is more than shape[1] (yolov8)
     {
-        yolov8 = true;
+        bool tv8 = true;
         rows = outputs[0].size[2];
         dimensions = outputs[0].size[1];
 

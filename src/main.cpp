@@ -112,6 +112,20 @@ void signalHandler(int signum)
  * "runtime" thread.
  * @return Should never return any value, and run infintely.
  */
+void displayImages(ThreadSafeQueue<cv::Mat>& displayQueue) {
+    while (true) {
+        cv::Mat frame;
+        if (displayQueue.tryPop(frame)) {
+            if (!frame.empty()) {
+                cv::imshow("Processed Frame", frame);
+                if (cv::waitKey(1) == 'q') {
+                    break;  // E+xit the loop if 'q' is pressed
+                }
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
 int main()
 {
 
@@ -156,78 +170,84 @@ int main()
    * issues occur.
    */
 
-  testing_flatbuffer::flatBufferGeneralTest(logger);
-  testing_peripherals::peripheralTest(logger);
-  testing_a_star::a_star_runner(logger);
+  caller();
 
-  /**
-   * @brief Start all necessary threading
-   *
-   * This section will start all the necessary threads, seperated in grouping
-   */
+  // testing_flatbuffer::flatBufferGeneralTest(logger);
+  // testing_peripherals::peripheralTest(logger);
+  // testing_a_star::a_star_runner(logger);
 
-  // ----- Multi-Threaded Execution Structures ----- //
+  // /**
+  //  * @brief Start all necessary threading
+  //  *
+  //  * This section will start all the necessary threads, seperated in grouping
+  //  */
 
-  // Threading
+  // // ----- Multi-Threaded Execution Structures ----- //
+
+  // // Threading
   ThreadSafeQueue<cv::Mat> displayQueue;
 
-  // RNS Sender
-  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
+  // // RNS Sender
+  // ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
 
-  // ----- Multi-Threaded Execution Context ----- //
+  // // ----- Multi-Threaded Execution Context ----- //
 
-  // Camera Threads
+  // // Camera Threads
   std::thread camera_thread([&]()
-                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
+                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
+  std::thread display_thread([&displayQueue]() {
+    displayImages(displayQueue);
+});                           
 
-  // Worker
-  // TODO: Spatial Analysis thread
-  // TODO: Spatial Actor thread
-  // TODO: MavLink Command Forwarder
+display_thread.join();
+  // // Worker
+  // // TODO: Spatial Analysis thread
+  // // TODO: Spatial Actor thread
+  // // TODO: MavLink Command Forwarder
 
-  // Misc
+  // // Misc
 
-  std::thread network_dameon([&]()
-                    { threaded(logger, 5, 3, rnsd_dameon, logger); });
+  // std::thread network_dameon([&]()
+  //                   { threaded(logger, 5, 3, rnsd_dameon, logger); });
 
-  std::thread network_sender([&]()
-                    { threaded(logger, 5, 3, rns_sender_manager, logger); });
+  // std::thread network_sender([&]()
+  //                   { threaded(logger, 5, 3, rns_sender_manager, logger); });
 
-  std::thread events([&]() 
-                    { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
+  // std::thread events([&]() 
+  //                   { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
 
-  std::thread emergency([&]()
-                    { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
+  // std::thread emergency([&]()
+  //                   { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
-  // std::thread heartbeat([&]()
-  //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });                 
+  // // std::thread heartbeat([&]()
+  // //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });                 
 
-  // TODO: Perhipheral manager thread
-  // TODO: Heartbeat thread
+  // // TODO: Perhipheral manager thread
+  // // TODO: Heartbeat thread
 
 
-  /**
-   * @brief GUI Entrance
-   * 
-   * All GUI systems should be handled in this function, the GUI should not
-   * be exposed anywhere else. If the GUI needs to be contexted, then it 
-   * should be done in a threaded manner.
-   */
+  // /**
+  //  * @brief GUI Entrance
+  //  * 
+  //  * All GUI systems should be handled in this function, the GUI should not
+  //  * be exposed anywhere else. If the GUI needs to be contexted, then it 
+  //  * should be done in a threaded manner.
+  //  */
 
-  // GUI
-  entrance(logger);
+  // // GUI
+  // entrance(logger);
 
-  /**
-   * @brief Functions that will never return likely, if they do must be before
-   * joins of things that will never finish
-   *
-   * @fn camera_thread will not return
-   * @fn log_thread will not return
-   * @fn network_sender will not return
-   */
+  // /**
+  //  * @brief Functions that will never return likely, if they do must be before
+  //  * joins of things that will never finish
+  //  *
+  //  * @fn camera_thread will not return
+  //  * @fn log_thread will not return
+  //  * @fn network_sender will not return
+  //  */
 
-  camera_thread.join();
-  network_sender.join();
+  // camera_thread.join();
+  // network_sender.join();
 
   return 0;
 }
