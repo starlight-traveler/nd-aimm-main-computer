@@ -113,7 +113,7 @@ void TextureDestroy(void *&pTextureView)
 float g_MonitorDPIScale = 0; // (DPI Awareness)
 
 // Main code
-int entrance(quill::Logger *logger)
+int gui(quill::Logger *logger)
 {
 
     AIMMClient_Base &AIMM = GetAIMM();

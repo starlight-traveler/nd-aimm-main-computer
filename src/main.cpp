@@ -63,6 +63,7 @@ Use it well.
 #include "emergency.h"
 #include "events.h"
 #include "emergency_listener.h"
+#include "monster.h" // Internal::Monster
 
 // Test headers
 #include "fb_check_t.h"
@@ -103,6 +104,7 @@ void signalHandler(int signum)
 
 // Use atomic for synchronization across threads
 
+
 /**
  * 
  * @fn int main()
@@ -114,7 +116,6 @@ void signalHandler(int signum)
  */
 int main()
 {
-
   // ----- Pre-execution Runtime Initialization Phase ----- //
 
   std::signal(SIGINT, signalHandler);
@@ -132,10 +133,10 @@ int main()
    * the signletons that need to be fired once.
    */
 
-  // Initalize logger
+  // Initialize logger
   quill::Logger *logger = initialize_logger();
 
-  // Initalize Events
+  // Initialize Events
   auto eventBus = std::make_shared<EventBus>();
   auto listener = std::make_shared<EmergencyListener>(logger, eventBus);
 
@@ -143,11 +144,7 @@ int main()
   LOG_DEBUG(logger, "Build date: {}", BUILD_DATE);
   LOG_DEBUG(logger, "Project version: {}", PROJECT_VERSION);
 
-  // ----- Single-Threaded Execution Context ----- //
-
-  primary_initialization();
-
-  py::gil_scoped_release release;
+#ifdef RUN_TESTS
 
   /**
    * @brief Start all tests to make sure functionality exits atomically
@@ -156,19 +153,39 @@ int main()
    * issues occur.
    */
 
-  testing_flatbuffer::flatBufferGeneralTest(logger);
-  testing_peripherals::peripheralTest(logger);
+  LOG_INFO(logger, "Running tests...");
+
+  bool fb_test = testing_flatbuffer::flatBufferGeneralTest(logger);
+  bool peripherals_test = testing_peripherals::peripheralTest(logger);
   testing_a_star::a_star_runner(logger);
+
+  if (fb_test && peripherals_test)
+  {
+    LOG_INFO(logger, "All tests passed successfully.");
+    return 0; // Exit after successful tests
+  }
+  else
+  {
+    LOG_ERROR(logger, "Some tests failed.");
+    return 1; // Exit with error code
+  }
+
+#else
+
+  // ----- Single-Threaded Execution Context ----- //
+
+  primary_initialization();
+
+  py::gil_scoped_release release;
 
   /**
    * @brief Start all necessary threading
    *
-   * This section will start all the necessary threads, seperated in grouping
+   * This section will start all the necessary threads, separated in grouping
    */
 
   // ----- Multi-Threaded Execution Structures ----- //
 
-  // Threading
   ThreadSafeQueue<cv::Mat> displayQueue;
 
   // RNS Sender
@@ -176,9 +193,11 @@ int main()
 
   // ----- Multi-Threaded Execution Context ----- //
 
-  // Camera Threads
+  // Same thread pool, but each camera still needs to be on its own thread
+
+  // Camera Thread Pool
   std::thread camera_thread([&]()
-                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); }); 
+                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
   // Worker
   // TODO: Spatial Analysis thread
@@ -193,29 +212,28 @@ int main()
   std::thread network_sender([&]()
                     { threaded(logger, 5, 3, rns_sender_manager, logger); });
 
-  std::thread events([&]() 
+  std::thread events([&]()
                     { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
 
   std::thread emergency([&]()
                     { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
   // std::thread heartbeat([&]()
-  //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });                 
+  //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });
 
-  // TODO: Perhipheral manager thread
+  // TODO: Peripheral manager thread
   // TODO: Heartbeat thread
-
 
   /**
    * @brief GUI Entrance
-   * 
+   *
    * All GUI systems should be handled in this function, the GUI should not
-   * be exposed anywhere else. If the GUI needs to be contexted, then it 
+   * be exposed anywhere else. If the GUI needs to be contexted, then it
    * should be done in a threaded manner.
    */
 
   // GUI
-  entrance(logger);
+  gui(logger);
 
   /**
    * @brief Functions that will never return likely, if they do must be before
@@ -229,15 +247,14 @@ int main()
   camera_thread.join();
   network_sender.join();
 
+  // Keep the main thread alive if necessary
+  // For example, wait indefinitely
+  while (true)
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+
+#endif
+
   return 0;
 }
-
-/*
-Examples of how to do stuff:
-
-// ---- Pushing To Network ---- //
-
-dataQueueNetwork.push(std::make_tuple(getRNSHexID("nd-aimm"), "/Users////.reticulum", "Hello, Reticulum!"));
-
-
-*/

@@ -121,6 +121,7 @@ configure_file(
 # option(OPTION_BUILD_EXAMPLES  "Build examples."                                        OFF)
 option(OPTION_ENABLE_COVERAGE "Add coverage information."                              ON)
 option(SERVER_CONNECT "Connect Without GUI" OFF)
+option(RUN_TESTS "Build the project in test mode, running only tests." OFF)
 
 
 #
@@ -151,7 +152,16 @@ if (WAYLAND_CLIENT_FOUND AND WAYLAND_CURSOR_FOUND AND WAYLAND_EGL_FOUND AND XKBC
     message(STATUS "Wayland support enabled")
 endif()
 
-
+set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM.cmake")
+if(NOT(EXISTS ${CPM_DOWNLOAD_LOCATION}))
+    message(STATUS "Downloading CPM.cmake")
+    file(DOWNLOAD https://github.com/cpm-cmake/CPM.cmake/releases/latest/download/CPM.cmake ${CPM_DOWNLOAD_LOCATION})
+endif()
+include(${CPM_DOWNLOAD_LOCATION})
+CPMAddPackage(
+    NAME BS_thread_pool
+    GITHUB_REPOSITORY bshoshany/thread-pool
+    VERSION 4.1.0)
 
 # Find packages required by the project. 
 # Add any new find_package() calls heres for additional external libraries.
@@ -189,6 +199,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree
     ${CMAKE_CURRENT_SOURCE_DIR}/include/networking
     ${CMAKE_CURRENT_SOURCE_DIR}/include/serialization
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/serialization/deserializer
     ${CMAKE_CURRENT_SOURCE_DIR}/include/gui/networking_helper
     ${CMAKE_CURRENT_SOURCE_DIR}/include/gui/native
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -220,6 +231,12 @@ add_subdirectory(
     ${CMAKE_CURRENT_LIST_DIR}/lib/subprocess
 )
 
+# Add thread pool library
+
+add_library(BS_thread_pool INTERFACE)
+target_include_directories(BS_thread_pool INTERFACE ${BS_thread_pool_SOURCE_DIR}/include)
+
+
 # Project declaration must be after the Hunter Cmake build system.
 project(AIMM LANGUAGES CXX)
 
@@ -245,6 +262,12 @@ if(HEADLESS)
   add_definitions(-DHEADLESS)
 endif()
 
+if(RUN_TESTS)
+    add_definitions(-DRUN_TESTS)
+    message(STATUS "Building in TEST mode: Only running tests.")
+else()
+    message(STATUS "Building in NORMAL mode: Running full application.")
+endif()
 
 
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "Build flatbuffers tests")
@@ -265,8 +288,8 @@ add_executable(${PROJECT_NAME}
     src/networking/udp.cpp
     src/peripherals.cpp
     src/pipeline/inference.cpp
-    src/serialization/serialFactory.cpp
-    src/serialization/serializerExample.cpp
+    src/serialization/serial_factory.cpp
+    src/serialization/serializer_example.cpp
     src/tests/fb_check_t.cpp
     src/tests/peripherals_t.cpp
     src/gui/gui.cpp
@@ -294,6 +317,7 @@ add_executable(${PROJECT_NAME}
     src/emergency.cpp
     src/events.cpp
     src/listeners/emergency_listener.cpp
+    src/serialization/deserializer/deserializerHeartbeat.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
@@ -325,6 +349,7 @@ target_link_libraries(${PROJECT_NAME}
         pybind11::embed 
         Dexode::EventBus
         subprocess
+        BS_thread_pool
         ${Python3_LIBRARIES}
 )
 

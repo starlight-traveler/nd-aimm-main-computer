@@ -1,0 +1,34 @@
+// Schema for the AIMM project
+namespace aimm.startup;
+
+table StartupInfo {
+    finish_startup:bool;
+    time_of_startup:string; // ISO 8601 format recommended
+}
+
+table PumpStatus {
+    pressure:float;
+}
+
+table BoatDepth {
+    depth:float;
+}
+
+table ValveStates {
+    valve1:bool;
+    valve2:bool;
+    valve3:bool;
+    valve4:bool;
+    valve5:bool;
+    valve6:bool;
+}
+
+table AIMMData {
+    startup_info:StartupInfo;
+    pump_status:PumpStatus;
+    boat_depth:BoatDepth;
+    valve_states:ValveStates;
+}
+
+root_type AIMMData;
+

@@ -1,0 +1,36 @@
+// Schema for the AIMM project heartbeat message
+namespace aimm.heartbeat;
+
+table WaterValveState {
+    // Boolean array to indicate open/closed state of each valve
+    states:[bool]; // 6 valves
+}
+
+table PressurizationStatus {
+    // Current pressure reading
+    pressure:float;
+    // Indicate if the system is in a target state
+    is_target_pressure:bool;
+}
+
+table VoltageLevels {
+    // Voltage readings from various components, example: batteries, sensors, etc.
+    main_battery:float;
+    auxiliary_battery:float;
+    auxiliary_battery_two:float;
+    auxiliary_battery_three:float;
+    voltage_auxillarly_computer:float;
+}
+
+table Heartbeat {
+    // Timestamp to track the exact time of the heartbeat, ISO 8601 format
+    timestamp:string;
+    // Data specific to boat operations
+    pump_pressure:float;
+    depth:float;
+    valveStates:WaterValveState;
+    pressurization:PressurizationStatus;
+    voltages:VoltageLevels;
+}
+
+root_type Heartbeat;

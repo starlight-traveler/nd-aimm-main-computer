@@ -1,0 +1,9 @@
+// Schema for the AIMM Auxillarly PCB (ESP32)
+namespace aimm.auxillary;
+
+// Pick the best one, there will be 4 batteries in the boat, and this system will grab their voltages, pick the best datatype
+
+// general string payload
+
+// Place three placeholder datapaths for three strings, a bool
+
