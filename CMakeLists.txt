@@ -8,7 +8,7 @@ cmake_policy(SET CMP0054 NEW) # Only interpret if() arguments as variables or ke
 cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH is enabled by default.
 cmake_policy(SET CMP0063 NEW) # Honor visibility properties for all target types.
 cmake_policy(SET CMP0077 NEW) # option() honors normal variables.
-cmake_policy(SET CMP0120 OLD) # The WriteCompilerDetectionHeader module is removed.
+cmake_policy(SET CMP0120 NEW) # The WriteCompilerDetectionHeader module is removed.
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 17)  # You can choose 11, 14, or 17 depending on your needs
@@ -282,7 +282,7 @@ file(GLOB SOCKET_SOURCES "src/gui/socket/*.cpp")
 # Add new source files to this list to compile them as part of the project.
 add_executable(${PROJECT_NAME} 
     src/main.cpp 
-    src/serialization/serialib.cpp
+    src/networking/serialib.cpp
     src/logger/logger.cpp
     src/pipeline/oak_lr_pipeline.cpp
     src/networking/udp.cpp
@@ -318,6 +318,7 @@ add_executable(${PROJECT_NAME}
     src/events.cpp
     src/listeners/emergency_listener.cpp
     src/serialization/deserializer/deserializerHeartbeat.cpp
+    src/tests/thread_pool_t.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )

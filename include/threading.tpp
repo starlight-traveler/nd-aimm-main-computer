@@ -14,7 +14,7 @@ void threaded(quill::Logger *logger, int retry_delay_sec, int max_retries, Func 
         try
         {
             func(std::forward<Args>(args)...);
-            LOG_INFO(logger, "Operation succeeded.");
+            // LOG_INFO(logger, "Operation succeeded.");
             return; // Success
         }
         catch (const std::exception &e)

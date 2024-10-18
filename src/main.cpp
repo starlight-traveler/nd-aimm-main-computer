@@ -43,6 +43,7 @@ Use it well.
 #include <pybind11/embed.h>
 #include <dexode/EventBus.hpp>
 #include <csignal>
+#include "BS_thread_pool.hpp"
 
 // Userland headers
 #include "version.h"
@@ -53,7 +54,6 @@ Use it well.
 #include "inference.hpp"
 #include "serializer_factory.h"
 #include "threading.h"
-#include "example_generated.h"
 #include "thread_safe_queue.hpp"
 #include "thread_safe_queue_network.hpp"
 #include "rns_sender.h"
@@ -63,15 +63,20 @@ Use it well.
 #include "emergency.h"
 #include "events.h"
 #include "emergency_listener.h"
-#include "monster.h" // Internal::Monster
+#include "gui.h"
+#include "r_tree.h"
+
+// Serialization Manual Schema
+#include "monster.h" 
+
+// Serialization Automated Schema
+#include "example_generated.h"
 
 // Test headers
 #include "fb_check_t.h"
 #include "peripherals_t.h"
 #include "a_star_check_t.h"
-
-#include "gui.h"
-#include "r_tree.h"
+#include "thread_pool_t.h"
 
 /**
  * @brief Set namespaces, typedefs, and usings
@@ -157,6 +162,7 @@ int main()
 
   bool fb_test = testing_flatbuffer::flatBufferGeneralTest(logger);
   bool peripherals_test = testing_peripherals::peripheralTest(logger);
+  bool thread_pool_test = testing_threadpool::threadpool_test(logger);
   testing_a_star::a_star_runner(logger);
 
   if (fb_test && peripherals_test)
@@ -186,31 +192,41 @@ int main()
 
   // ----- Multi-Threaded Execution Structures ----- //
 
+  // Queing structures
   ThreadSafeQueue<cv::Mat> displayQueue;
-
-  // RNS Sender
   ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
 
   // ----- Multi-Threaded Execution Context ----- //
 
-  // Same thread pool, but each camera still needs to be on its own thread
+  // TODO: Camera thread pool
+  // BS::thread_pool pool;
 
-  // Camera Thread Pool
-  std::thread camera_thread([&]()
-                            { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
+  // TODO: Camera Thread Result
+  // std::thread camera_results([&]()
+  //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
   // Worker
   // TODO: Spatial Analysis thread
+  // std::thread spatial_analysis([&]()
+  //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
+
   // TODO: Spatial Actor thread
+  // std::thread spatial_decision([&]()
+  //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
+
   // TODO: MavLink Command Forwarder
+  // std::thread mavlink([&]()
+  //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
   // Misc
-
   std::thread network_dameon([&]()
                     { threaded(logger, 5, 3, rnsd_dameon, logger); });
 
   std::thread network_sender([&]()
                     { threaded(logger, 5, 3, rns_sender_manager, logger); });
+
+  // std::thread network_reciever([&]()
+  //                            { threaded(logger, 5, 3, rns_sender_manager, logger); });
 
   std::thread events([&]()
                     { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
@@ -218,11 +234,14 @@ int main()
   std::thread emergency([&]()
                     { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
+  // TODO: Peripheral manager thread
+  // std::thread peripheral([&]()
+  //                   { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
+
+  // TODO: Heartbeat thread
   // std::thread heartbeat([&]()
   //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });
 
-  // TODO: Peripheral manager thread
-  // TODO: Heartbeat thread
 
   /**
    * @brief GUI Entrance
@@ -244,7 +263,7 @@ int main()
    * @fn network_sender will not return
    */
 
-  camera_thread.join();
+  // camera_thread.join();
   network_sender.join();
 
   // Keep the main thread alive if necessary
