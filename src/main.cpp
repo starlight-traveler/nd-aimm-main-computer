@@ -8,22 +8,11 @@
 |_____|\____||______.'      |____| |____||_____||_____||_____||_____||_____|
 ================================================================================
 Authors: The Notre Dame Artifical Intelligence Team
-Date: June 4th, 2024
+Date: Octiber 24th, 2024
 
 */
 
-/*
-
-Note: All functions must have applicable documentation for future use.
-
-This utilizes a thread pool model, trunk based development model.
-
-Use it well.
-
-*/
-
-
-// Built in headers
+// Built In Headers (Including Library)
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include "depthai/depthai.hpp"
@@ -45,7 +34,7 @@ Use it well.
 #include <csignal>
 #include "BS_thread_pool.hpp"
 
-// Userland headers
+// Userland General Headers
 #include "version.h"
 #include "logger.h"
 #include "pipeline.h"
@@ -54,25 +43,30 @@ Use it well.
 #include "inference.hpp"
 #include "serializer_factory.h"
 #include "threading.h"
-#include "thread_safe_queue.hpp"
-#include "thread_safe_queue_network.hpp"
 #include "rns_sender.h"
-#include "rns_manager.h"
-#include "ring_buffer.h"
 #include "initializer.h"
 #include "emergency.h"
-#include "events.h"
 #include "emergency_listener.h"
 #include "gui.h"
+
+// Dameons
+#include "mavlink_dameon.h"
+#include "rns_manager.h"
+#include "events.h"
+
+// Specialized Data Structures
 #include "r_tree.h"
+#include "ring_buffer.h"
+#include "thread_safe_queue.hpp"
+#include "serial_data.h"
 
 // Serialization Manual Schema
 #include "monster.h" 
 
 // Serialization Automated Schema
-#include "example_generated.h"
+#include "example_generated.h" // Related to monster
 
-// Test headers
+// Test Headers
 #include "fb_check_t.h"
 #include "peripherals_t.h"
 #include "a_star_check_t.h"
@@ -194,31 +188,29 @@ int main()
 
   // Queing structures
   ThreadSafeQueue<cv::Mat> displayQueue;
-  ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> dataNetwork;
+  ThreadSafeQueue<std::pair<std::string, FlatBufferData>> dataQueueSend;
 
   // ----- Multi-Threaded Execution Context ----- //
 
-  // TODO: Camera thread pool
+  // TODO: Imaging Thread Pool
   // BS::thread_pool pool;
 
-  // TODO: Camera Thread Result
+  // TODO: Camera Threads (~6 must spawn)
   // std::thread camera_results([&]()
   //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
-  // Worker
-  // TODO: Spatial Analysis thread
+  // TODO: Spatial Analysis Threads
   // std::thread spatial_analysis([&]()
   //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
-  // TODO: Spatial Actor thread
   // std::thread spatial_decision([&]()
   //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
 
-  // TODO: MavLink Command Forwarder
-  // std::thread mavlink([&]()
-  //                           { threaded(logger, 5, 3, orchestrationThreadLRCamera, logger, std::ref(displayQueue)); });
+  // TODO: Mavlink
+  std::thread mavlink([&]()
+                            { threaded(logger, 5, 3, mavlink_dameon, logger); });
 
-  // Misc
+  // TODO: Networking
   std::thread network_dameon([&]()
                     { threaded(logger, 5, 3, rnsd_dameon, logger); });
 
@@ -228,17 +220,20 @@ int main()
   // std::thread network_reciever([&]()
   //                            { threaded(logger, 5, 3, rns_sender_manager, logger); });
 
+
+  // Events
   std::thread events([&]()
                     { threaded(logger, 5, 3, event_processor, std::ref(eventBus)); });
 
+  // Emergency
   std::thread emergency([&]()
                     { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
-  // TODO: Peripheral manager thread
+  // TODO: Peripherals
   // std::thread peripheral([&]()
   //                   { threaded(logger, 5, 3, emergency_instance, logger, std::ref(listener)); });
 
-  // TODO: Heartbeat thread
+  // TODO: Heartbeat
   // std::thread heartbeat([&]()
   //                   { threaded(logger, 5, 3, heartbeat, logger, eventBus); });
 
@@ -255,19 +250,10 @@ int main()
   gui(logger);
 
   /**
-   * @brief Functions that will never return likely, if they do must be before
-   * joins of things that will never finish
-   *
-   * @fn camera_thread will not return
-   * @fn log_thread will not return
-   * @fn network_sender will not return
+   * @brief Keep the main therad alive indefintely, though it will never get
+   * to this point.
    */
 
-  // camera_thread.join();
-  network_sender.join();
-
-  // Keep the main thread alive if necessary
-  // For example, wait indefinitely
   while (true)
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));

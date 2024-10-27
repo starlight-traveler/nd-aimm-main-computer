@@ -35,3 +35,6 @@
 [submodule "lib/subprocess"]
 	path = lib/subprocess
 	url = https://github.com/benman64/subprocess.git
+[submodule "lib/MAVSDK"]
+	path = lib/MAVSDK
+	url = https://github.com/mavlink/MAVSDK.git

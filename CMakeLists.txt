@@ -198,6 +198,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/movement
     ${CMAKE_CURRENT_SOURCE_DIR}/include/analysis/r_tree
     ${CMAKE_CURRENT_SOURCE_DIR}/include/networking
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/mavlink
     ${CMAKE_CURRENT_SOURCE_DIR}/include/serialization
     ${CMAKE_CURRENT_SOURCE_DIR}/include/serialization/deserializer
     ${CMAKE_CURRENT_SOURCE_DIR}/include/gui/networking_helper
@@ -242,7 +243,7 @@ project(AIMM LANGUAGES CXX)
 
 find_package(OpenCV 4 REQUIRED)
 find_package(OpenGL REQUIRED)
-
+find_package(MAVSDK REQUIRED)
 
 include_directories( ${OPENGL_INCLUDE_DIRS} )
 
@@ -319,6 +320,7 @@ add_executable(${PROJECT_NAME}
     src/listeners/emergency_listener.cpp
     src/serialization/deserializer/deserializerHeartbeat.cpp
     src/tests/thread_pool_t.cpp
+    src/mavlink/mavlink.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
@@ -351,6 +353,10 @@ target_link_libraries(${PROJECT_NAME}
         Dexode::EventBus
         subprocess
         BS_thread_pool
+        mavsdk
+        mavsdk_telemetry    
+        mavsdk_action
+        mavsdk_mission         
         ${Python3_LIBRARIES}
 )
 

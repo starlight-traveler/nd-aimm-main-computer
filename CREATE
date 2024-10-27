@@ -42,7 +42,6 @@ function display_help() {
     exit 0
 }
 
-# Function to install dependencies on Linux
 install_linux() {
   # Update package list and upgrade packages
   sudo apt-get update -y
@@ -73,7 +72,7 @@ install_linux() {
       libxcursor-dev \
       libxi-dev \
       python3.10 \
-      python3.10-dev \
+      python3.10-dev
 
   # Install unbuffer (comes with expect-dev package)
   sudo apt-get install -y expect-dev
@@ -85,7 +84,7 @@ install_linux() {
   sudo apt-get install -y doxygen graphviz
 
   # Install FlatBuffers (flatc)
-  FLATBUFFERS_VERSION=2.0.0
+  FLATBUFFERS_VERSION=24.3.25
   wget https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VERSION}.tar.gz
   tar -xzf v${FLATBUFFERS_VERSION}.tar.gz
   cd flatbuffers-${FLATBUFFERS_VERSION}
@@ -95,22 +94,27 @@ install_linux() {
   cd ..
   rm -rf flatbuffers-${FLATBUFFERS_VERSION} v${FLATBUFFERS_VERSION}.tar.gz
 
+  # Build MAVSDK using CMake
+  echo "${BoldBlue}[Install] Cloning and building MAVSDK...${Reset}"
+  cd ~/nd-aimm-main-computer/lib/MAVSDK
+  cmake -Bbuild -H.
+  cmake --build build -j8
+  sudo cmake --build build --target install
+
   # Verify installations
   echo "${Yellow}================================================================================${Reset}"
-  # Verify installations
   echo "${BoldBlue}[Install] Verifying installations...${Reset}"
   echo "${Yellow}================================================================================${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} Unbuffer: $(which unbuffer)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} CMake: $(cmake --version)${Reset}"
+  echo "${BoldBlue}[Install]${Reset}${Green} CMake: $(cmake --version | head -n 1)${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} Git: $(git --version)${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} OpenCV: $(pkg-config --modversion opencv4)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} GCC: $(gcc --version)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} G++: $(g++ --version)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} Clang: $(clang --version)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} LCOV: $(lcov --version)${Reset}"
+  echo "${BoldBlue}[Install]${Reset}${Green} GCC: $(gcc --version | head -n 1)${Reset}"
+  echo "${BoldBlue}[Install]${Reset}${Green} G++: $(g++ --version | head -n 1)${Reset}"
+  echo "${BoldBlue}[Install]${Reset}${Green} Clang: $(clang --version | head -n 1)${Reset}"
+  echo "${BoldBlue}[Install]${Reset}${Green} LCOV: $(lcov --version | head -n 1)${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} Doxygen: $(doxygen --version)${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} Flatc: $(flatc --version)${Reset}"
-  echo "${BoldBlue}[Install]${Reset}${Green} Earthly: $(earthly --version)${Reset}"
   echo "${Yellow}================================================================================${Reset}"
   echo "${BoldBlue}[Install]${Reset}${Green} All dependencies installed successfully on Linux!${Reset}"
   echo "${Yellow}================================================================================${Reset}"
@@ -120,12 +124,36 @@ install_linux() {
 
 }
 
+
 # Function to install dependencies on macOS
 install_macos() {
 
   echo "${Yellow}================================================================================${Reset}"
   echo "${BoldBlue}[Install] Installing...${Reset}"
   echo "${Yellow}================================================================================${Reset}"
+
+  echo "${Red}================================================================================${Reset}"
+  # Display red warning message
+  echo "\033[1;31m[ERROR] WARNING: This version of install is not going to be supported in the future and may break. Please acknowledge this before proceeding.\033[0m"
+  echo "${Red}================================================================================${Reset}"
+
+  # Query the user for acknowledgment
+  while true; do
+    echo "\033[1;31mDo you wish to proceed? (Yy/Nn):\033[0m"
+    read yn
+    case $yn in
+        [Yy]* ) 
+            echo "\033[1;31mAcknowledged. Proceeding with the installation...\033[0m"; 
+            break;;
+        [Nn]* ) 
+            echo "\033[1;31mInstallation aborted by user.\033[0m";
+            exit 1;;
+        * ) 
+            echo "\033[1;31mPlease answer yes or no.\033[0m";;
+    esac
+  done
+  
+  echo "${Red}================================================================================${Reset}" 
 
   # Install Homebrew if not already installed
   if ! command -v brew &> /dev/null; then
@@ -153,6 +181,13 @@ install_macos() {
   echo 'export PKG_CONFIG_PATH="/opt/homebrew/opt/opencv/lib/pkgconfig:$PKG_CONFIG_PATH"' >> ~/.zshrc
   echo "export PKG_CONFIG_PATH=$OPENCV_PATH/lib/pkgconfig:\$PKG_CONFIG_PATH" >> ~/.zshrc
   
+  # Build MAVSDK using CMake
+  echo "${BoldBlue}[Install] Cloning and building MAVSDK...${Reset}"
+  cd ~/nd-aimm-main-computer/lib/MAVSDK
+  cmake -Bbuild -H.
+  cmake --build build -j8
+  sudo cmake --build build --target install
+
   echo "${Yellow}================================================================================${Reset}"
   # Verify installations
   echo "${BoldBlue}[Install] Verifying installations...${Reset}"

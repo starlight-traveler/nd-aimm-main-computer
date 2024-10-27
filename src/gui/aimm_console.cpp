@@ -136,7 +136,7 @@ struct AIMMConsole
 
             while (!(logEntry = logMonitor->GetNextLogEntry()).empty() && quillOutput)
             {
-                AddLog(logEntry.c_str()); // Process each log entry with your external AddLog function
+                AddLog("%s", logEntry.c_str()); // Process each log entry with your external AddLog function
                 foundLogs = true;
             }
 

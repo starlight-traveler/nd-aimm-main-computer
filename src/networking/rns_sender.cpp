@@ -4,26 +4,22 @@
 #include <iostream>
 #include <thread>
 #include <pybind11/embed.h>
-#include "test_generated.h"
 #include <vector>
 #include <string>
+#include "serial_data.h"
+#include "rns_mapping.h"
 
 namespace py = pybind11;
 
-void send_data(const std::string &destination_hexhash, const std::string &configpath, const std::string &text)
+void send_data(const std::string &destination_hexhash, const std::string &configpath, const uint8_t *buffer, size_t size)
 {
     try
     {
         py::module_ sender = py::module_::import("rns_sender");
         auto client = sender.attr("client");
 
-        flatbuffers::FlatBufferBuilder builder;
-        auto text_offset = builder.CreateString(text);
-        auto message = Example::CreateMessage(builder, text_offset);
-        builder.Finish(message);
-
-        // Convert FlatBuffer to Python bytes and call Python function
-        client(destination_hexhash, configpath, py::bytes(reinterpret_cast<const char *>(builder.GetBufferPointer()), builder.GetSize()));
+        // Pass the FlatBuffer to the Python client
+        client(destination_hexhash, configpath, py::bytes(reinterpret_cast<const char *>(buffer), size));
     }
     catch (const py::error_already_set &e)
     {
@@ -32,37 +28,16 @@ void send_data(const std::string &destination_hexhash, const std::string &config
     }
 }
 
-void rns_sender_manager_threaded(ThreadSafeQueueNetwork<std::tuple<std::string, std::string, std::string>> &dataQueue)
+void rns_sender_manager_threaded(ThreadSafeQueue<std::pair<std::string, FlatBufferData>> &dataQueueSend)
 {
     py::gil_scoped_acquire acquire; // Acquire the GIL since we are using Python
     while (true)
     {
-        auto [destination_hexhash, configpath, text] = dataQueue.pop();
-        send_data(destination_hexhash, configpath, text);
+        auto [identifier, buffer] = dataQueueSend.pop();
+        auto [configpath, destination_hexhash] = get_config_and_hash(identifier);
+        send_data(destination_hexhash, configpath, buffer.data(), buffer.size());
     }
 }
-
-// void send_data(const std::string &destination_hexhash, const std::string &configpath, const std::string &text)
-// {
-//     try
-//     {
-//         py::module_ sender = py::module_::import("test");
-//         auto client = sender.attr("client");
-
-//         flatbuffers::FlatBufferBuilder builder;
-//         auto text_offset = builder.CreateString(text);
-//         auto message = Example::CreateMessage(builder, text_offset);
-//         builder.Finish(message);
-
-//         // Convert FlatBuffer to Python bytes and call Python function
-//         client(destination_hexhash, configpath, py::bytes(reinterpret_cast<const char *>(builder.GetBufferPointer()), builder.GetSize()));
-//     }
-//     catch (const py::error_already_set &e)
-//     {
-//         std::cerr << "Python error: " << e.what() << std::endl;
-//         throw;
-//     }
-// }
 
 // void rns_sender_manager()
 // {

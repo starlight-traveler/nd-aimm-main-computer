@@ -25,7 +25,7 @@ void AIMMBasic::TestStatusButton(const char *id, const ImVec4 &color, bool runni
         char buf[32];
         snprintf(buf, sizeof(buf), "%d", display_counter);
         ImGui::SameLine();
-        ImGui::Text(buf);
+        ImGui::Text("%s", buf);
     }
 }
 
