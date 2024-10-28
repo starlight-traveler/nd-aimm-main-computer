@@ -9,8 +9,10 @@
 #include <vector>
 #include <string>
 #include "thread_safe_queue.hpp"
+#include "serial_data.h"
+#include "thread_safe_queue.hpp"
 
 void send_data(const std::string &destination_hexhash, const std::string &configpath, const std::string &text);
-void rns_sender_manager_threaded(ThreadSafeQueue<std::tuple<std::string, std::string, std::string>> &dataQueue);
+void rns_sender(ThreadSafeQueue<std::pair<std::string, FlatBufferData>> &dataQueueSend);
 
 #endif // RNS_SENDER_H

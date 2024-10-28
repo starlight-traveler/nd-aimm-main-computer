@@ -212,14 +212,13 @@ int main()
 
   // TODO: Networking
   std::thread network_dameon([&]()
-                    { threaded(logger, 5, 3, rnsd_dameon, logger); });
+                             { threaded(logger, 5, 3, rnsd_daemon, logger); });
 
   std::thread network_sender([&]()
-                    { threaded(logger, 5, 3, rns_sender_manager, logger); });
+                             { threaded(logger, 5, 3, rns_sender_manager, std::ref(dataQueueSend), logger); });
 
   // std::thread network_reciever([&]()
-  //                            { threaded(logger, 5, 3, rns_sender_manager, logger); });
-
+  //                            { threaded(logger, 5, 3, rns_reciever_manager, logger); });
 
   // Events
   std::thread events([&]()

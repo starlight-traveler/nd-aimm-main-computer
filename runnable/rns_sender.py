@@ -5,9 +5,7 @@ import time
 import argparse
 from datetime import datetime
 
-sys.path.insert(0, '/Users/rpaillet/Documents/Projects/NDAIMM/nd-aimm/nd-aimm-main-computer/build')
-
-import quill_logger
+sys.path.insert(0, '/Users/rpaillet/local/ndaimm/nd-aimm/nd-aimm-main-computer/build')
 
 import RNS
 from RNS.vendor import umsgpack
@@ -36,14 +34,14 @@ def client(destination_hexhash, configpath, data):
     try:
         dest_len = (RNS.Reticulum.TRUNCATED_HASHLENGTH//8)*2
         if len(destination_hexhash) != dest_len:
-            quill_logger.log_message("Destination length is invalid, must be {hex} hexadecimal characters ({byte} bytes).", quill_logger.LogLevel.Error)
+            print("Destination length is invalid, must be {hex} hexadecimal characters ({byte} bytes).")
             raise ValueError(
                 "Destination length is invalid, must be {hex} hexadecimal characters ({byte} bytes).".format(hex=dest_len, byte=dest_len//2)
             )
             
         destination_hash = bytes.fromhex(destination_hexhash)
     except:
-        quill_logger.log_message("Invalid destination entered. Check your input!", quill_logger.LogLevel.Error)
+        print("Invalid destination entered. Check your input!")
         exit()
 
     # # We must first initialise Reticulum
@@ -51,7 +49,7 @@ def client(destination_hexhash, configpath, data):
     
     # Check if we know a path to the destination
     if not RNS.Transport.has_path(destination_hash):
-        quill_logger.log_message("Destination is not yet known. Requesting path and waiting for announce to arrive...", quill_logger.LogLevel.Info)
+        print("Destination is not yet known. Requesting path and waiting for announce to arrive...")
         RNS.Transport.request_path(destination_hash)
         while not RNS.Transport.has_path(destination_hash):
             time.sleep(0.1)
@@ -59,8 +57,8 @@ def client(destination_hexhash, configpath, data):
     # Recall the server identity
     server_identity = RNS.Identity.recall(destination_hash)
 
-    # Inform the user that we'll begin connecting
-    quill_logger.log_message("Establishing link with server...", quill_logger.LogLevel.Info)
+    # Inform the user that w
+    print("Establishing link with server...")
 
     # When the server identity is known, we set
     # up a destination
@@ -104,7 +102,7 @@ def client_loop(data):
         server_link.teardown()
 
     except Exception as e:
-        quill_logger.log_message("Error while sending data over the link buffer: " + str(e), quill_logger.LogLevel.Error)
+        print("Error while sending data over the link buffer: " + str(e))
         server_link.teardown()
 
 # This function is called when a link
@@ -124,11 +122,11 @@ def link_established(link):
 # user, and exit the program
 def link_closed(link):
     if link.teardown_reason == RNS.Link.TIMEOUT:
-        quill_logger.log_message("The link timed out, exiting now", quill_logger.LogLevel.Info)
+        print("The link timed out, exiting now")
     elif link.teardown_reason == RNS.Link.DESTINATION_CLOSED:
-        quill_logger.log_message("The link was closed by the server, exiting now", quill_logger.LogLevel.Info)
+        print("The link was closed by the server, exiting now")
     else:
-        quill_logger.log_message("Link closed, exiting now", quill_logger.LogLevel.Info)
+        print("Link closed, exiting now")
     
     RNS.Reticulum.exit_handler()
     time.sleep(1.5)
@@ -137,6 +135,6 @@ def link_closed(link):
 def client_buffer_ready(ready_bytes: int):
     global buffer
     data = buffer.read(ready_bytes)
-    quill_logger.log_message("Received data over the link buffer: " + data.decode("utf-8"), quill_logger.LogLevel.Info)
+    print("Received data over the link buffer: " + data.decode("utf-8"))
     print("> ", end=" ")
     sys.stdout.flush()

@@ -351,11 +351,11 @@ if (( available_space < required_space_mb * 1024 )); then
     # exit 1
 fi
 
-# Network availability check (simple ping to a reliable host)
-if ! ping -c 1 8.8.8.8 >/dev/null 2>&1; then
-    echo "${Red}[Check] Error: Network check failed. Please check your internet connection.${Reset}"
-    # exit 1
-fi
+# # Network availability check (simple ping to a reliable host)
+# if ! ping -c 1 8.8.8.8 >/dev/null 2>&1; then
+#     echo "${Red}[Check] Error: Network check failed. Please check your internet connection.${Reset}"
+#     # exit 1
+# fi
 
 # Check specific configuration file is present
 # if [ ! -f "config/settings.yaml" ]; then

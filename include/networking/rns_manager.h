@@ -1,26 +1,35 @@
-#ifndef RNS_MANAGER_H
-#define RNS_MANAGER_H
+#pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <mutex>
+#include "subprocess.hpp"
+#include "logger.h"
+#include "threading.tpp"
+#include <pybind11/embed.h>
+#include "serial_data.h"
+#include "thread_safe_queue.hpp"
 
-// Structure to hold data about a Reticulum node
-struct RNSData {
+namespace py = pybind11;
+
+// Define a structure for node data
+struct RNSData
+{
     std::string name;
-    std::string hexID;
+    std::string hex_id;
     bool online;
-    std::string routingID; // Added routing ID field
+    std::string routing_id;
 };
 
-// Functions to manage and access node data
-void initializeNodes();
-RNSData getRNSData(const std::string& nodeName);
-void printNodeStatuses(quill::Logger *logger);
+// Function prototypes
+void rnsd_daemon(quill::Logger *logger);
+void rns_receiver_manager(quill::Logger *logger);
+void rns_sender_manager(ThreadSafeQueue<std::pair<std::string, FlatBufferData>> &dataQueueSend, quill::Logger *logger);
 void verify_connection(const std::string &hexadecimal, quill::Logger *logger);
-std::string getRNSHexID(const std::string &nodeName);
-void rnsd_dameon(quill::Logger *logger);
-void rns_sender_manager(quill::Logger *logger);
+void initialize_nodes();
+void print_node_statuses(quill::Logger *logger);
+RNSData get_rns_data(const std::string &node_name);
+std::string get_rns_hex_id(const std::string &node_name);
 
-#endif // RNS_MANAGER_H
+extern const std::vector<std::string> rns_names;
+extern const std::vector<std::string> rns_hex_ids;
+extern const std::vector<std::string> rns_routing_ids;
+extern std::map<std::string, RNSData> node_data_map;
+extern std::mutex map_mutex;

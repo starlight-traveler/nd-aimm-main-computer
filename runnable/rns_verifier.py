@@ -7,8 +7,6 @@ import argparse
 
 sys.path.insert(0, '../build')
 
-import quill_logger
-
 from RNS._version import __version__
 
 
@@ -178,7 +176,7 @@ def program_setup(configdir, table, rates, drop, destination_hexhash, verbosity,
 
         if not RNS.Transport.has_path(destination_hash):
             RNS.Transport.request_path(destination_hash)
-            quill_logger.log_message("Path to "+ RNS.prettyhexrep(destination_hash) + " requested.", quill_logger.LogLevel.Info)
+            print("Path to "+ RNS.prettyhexrep(destination_hash) + " requested.")
             sys.stdout.flush()
 
         i = 0
@@ -203,9 +201,9 @@ def program_setup(configdir, table, rates, drop, destination_hexhash, verbosity,
                 else:
                     ms = ""
 
-                quill_logger.log_message("Path found, destination is " + str(hops) + " hop" + ms + " away via " + next_hop + " on " + next_hop_interface + "!", quill_logger.LogLevel.Info)
+                print("Path found, destination is " + str(hops) + " hop" + ms + " away via " + next_hop + " on " + next_hop_interface + "!")
         else:
-            quill_logger.log_message("Path failed to be found, offline!", quill_logger.LogLevel.Error)
+            print("Path failed to be found, offline!")
             sys.exit(1)
 
 def run_rnpath(destination_hexhash=None):
@@ -375,4 +373,4 @@ def pretty_date(time=False):
         return str(int(day_diff / 30)) + " months"
     return str(int(day_diff / 365)) + " years"
 
-# run_rnpath("10858d74bc5d400beb73d691181ca1e9")
+run_rnpath("a13f5304ee28232b37b85546055c7fb2")

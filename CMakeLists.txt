@@ -321,6 +321,7 @@ add_executable(${PROJECT_NAME}
     src/serialization/deserializer/deserializerHeartbeat.cpp
     src/tests/thread_pool_t.cpp
     src/mavlink/mavlink.cpp
+    src/networking/rns_mapping.cpp
     ${GLAD_GL}
     ${SOCKET_SOURCES}
 )
@@ -353,10 +354,7 @@ target_link_libraries(${PROJECT_NAME}
         Dexode::EventBus
         subprocess
         BS_thread_pool
-        mavsdk
-        mavsdk_telemetry    
-        mavsdk_action
-        mavsdk_mission         
+        mavsdk      
         ${Python3_LIBRARIES}
 )
 

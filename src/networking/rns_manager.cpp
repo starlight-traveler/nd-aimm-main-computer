@@ -1,17 +1,5 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include <map>
-#include <mutex>
-#include <thread>
-#include <cstring> // For memset
-#include <pybind11/embed.h>
-#include "subprocess.hpp"
-#include "logger.h"
-#include "quill/LogMacros.h"
-#include "threading.tpp"
-
-namespace py = pybind11;
+#include "rns_manager.h"
+#include "rns_sender.h"
 
 // Using declarations
 using subprocess::CompletedProcess;
@@ -19,35 +7,20 @@ using subprocess::PipeOption;
 using subprocess::Popen;
 using subprocess::RunBuilder;
 
-// Declare global variables before use
-std::vector<std::string> rnsNames = {"nd-aimm"};
-std::vector<std::string> rnsHexID = {"cb02f08466a9cac03d6523c504ac1879"};
-std::vector<std::string> rnsRoutingID = {"10858d74bc5d400beb73d691181ca1e9"};
+namespace py = pybind11;
 
-// Define a structure for node data
-struct RNSData
-{
-    std::string name;
-    std::string hexID;
-    bool online;
-    std::string routingID; // Added routing ID field
-};
+// Declare global variables before use
+const std::vector<std::string> rns_names = {"nd-aimm"};
+const std::vector<std::string> rns_hex_ids = {"cb02f08466a9cac03d6523c504ac1879"};
+const std::vector<std::string> rns_routing_ids = {"10858d74bc5d400beb73d691181ca1e9"};
 
 // Global map to hold node data, and a mutex to protect it
-std::map<std::string, RNSData> nodeDataMap;
-std::mutex mapMutex;
+std::map<std::string, RNSData> node_data_map;
+std::mutex map_mutex;
 
-// Function prototypes
-void rnsd_daemon(quill::Logger *logger);
-void rns_receiver_manager(quill::Logger *logger);
-void rns_sender_manager(quill::Logger *logger);
-void verify_connection(const std::string &hexadecimal, quill::Logger *logger);
-void initializeNodes();
-void printNodeStatuses(quill::Logger *logger);
-RNSData getRNSData(const std::string &nodeName);
-std::string getRNSHexID(const std::string &nodeName);
-
-// Implementation of rnsd_daemon
+/**
+ * @brief Daemon
+ */
 void rnsd_daemon(quill::Logger *logger)
 {
     // Start the rnsd subprocess with output piped
@@ -55,46 +28,37 @@ void rnsd_daemon(quill::Logger *logger)
                       .cout(PipeOption::pipe)
                       .popen();
 
-    // Buffer to store the output
-    char buf[1024];
-
-    // Read from the output pipe until there's no more data
-    size_t bytes_read = 0;
-    while ((bytes_read = subprocess::pipe_read(popen.cout, buf, sizeof(buf) - 1)) > 0)
-    {
-        buf[bytes_read] = '\0'; // Null-terminate the string
-        LOG_INFO(logger, "RNSD: {}", buf);
-        std::memset(buf, 0, sizeof(buf)); // Clear the buffer
-    }
-
     // Close the process and handle cleanup
-    // popen.close(); // Uncomment if necessary
+    // popen.close();
 }
 
-// Implementation of rns_receiver_manager
+/**
+ * @brief Receiver
+ */
 void rns_receiver_manager(quill::Logger *logger)
 {
     // TODO: Implement receiver logic
 }
 
-// Implementation of rns_sender_manager
-void rns_sender_manager(quill::Logger *logger)
+/**
+ * @brief Sender
+ */
+void rns_sender_manager(ThreadSafeQueue<std::pair<std::string, FlatBufferData>> &dataQueueSend, quill::Logger *logger)
 {
     py::gil_scoped_acquire acquire;
 
-    initializeNodes();         // Initialize the node data
-    printNodeStatuses(logger); // Print the status of all nodes
+    initialize_nodes();          // Initialize the node data
 
     // Loop through all nodes and verify connections
     {
-        std::lock_guard<std::mutex> lock(mapMutex); // Lock the mutex once for the entire operation
-        for (auto &pair : nodeDataMap)
+        std::lock_guard<std::mutex> lock(map_mutex); // Lock the mutex once for the entire operation
+        for (auto &pair : node_data_map)
         {
             RNSData &node = pair.second;
             try
             {
-                verify_connection(node.routingID, logger); // Verify each node's connection
-                node.online = true;                        // Update the node's online status if verification is successful
+                verify_connection(node.routing_id, logger); // Verify each node's connection
+                node.online = true;                         // Update the node's online status if verification is successful
             }
             catch (const std::exception &e)
             {
@@ -104,11 +68,22 @@ void rns_sender_manager(quill::Logger *logger)
         }
     }
 
-    // Optionally, print updated statuses
-    printNodeStatuses(logger);
+
+    // Print updated node statuses
+    print_node_statuses(logger);
+
+    // Log that we have moved on
+    LOG_INFO(logger, "Finished verification of network stack... starting sender.");
+
+    // Sender information
+    rns_sender(dataQueueSend);
+
+
 }
 
-// Implementation of verify_connection
+/**
+ * @brief Initializer
+ */
 void verify_connection(const std::string &hexadecimal, quill::Logger *logger)
 {
     try
@@ -127,34 +102,34 @@ void verify_connection(const std::string &hexadecimal, quill::Logger *logger)
 }
 
 // Initialize the node data map
-void initializeNodes()
+void initialize_nodes()
 {
     // Ensure data vectors are of the same length
-    if (rnsNames.size() != rnsHexID.size() || rnsNames.size() != rnsRoutingID.size())
+    if (rns_names.size() != rns_hex_ids.size() || rns_names.size() != rns_routing_ids.size())
     {
         std::cerr << "Error: Data vectors must be of the same length." << std::endl;
         return;
     }
 
-    std::lock_guard<std::mutex> lock(mapMutex);
-    for (size_t i = 0; i < rnsNames.size(); ++i)
+    std::lock_guard<std::mutex> lock(map_mutex);
+    for (size_t i = 0; i < rns_names.size(); ++i)
     {
         RNSData data;
-        data.name = rnsNames[i];
-        data.hexID = rnsHexID[i];
-        data.routingID = rnsRoutingID[i];
+        data.name = rns_names[i];
+        data.hex_id = rns_hex_ids[i];
+        data.routing_id = rns_routing_ids[i];
         data.online = false;
-        nodeDataMap[rnsNames[i]] = data;
+        node_data_map[rns_names[i]] = data;
     }
 }
 
 // Function to access node data safely
-RNSData getRNSData(const std::string &nodeName)
+RNSData get_rns_data(const std::string &node_name)
 {
-    std::lock_guard<std::mutex> lock(mapMutex);
-    if (nodeDataMap.find(nodeName) != nodeDataMap.end())
+    std::lock_guard<std::mutex> lock(map_mutex);
+    if (node_data_map.find(node_name) != node_data_map.end())
     {
-        return nodeDataMap[nodeName];
+        return node_data_map[node_name];
     }
     else
     {
@@ -163,13 +138,13 @@ RNSData getRNSData(const std::string &nodeName)
 }
 
 // Get RNS Online Node Data
-std::string getRNSHexID(const std::string &nodeName)
+std::string get_rns_hex_id(const std::string &node_name)
 {
-    std::lock_guard<std::mutex> lock(mapMutex);
-    auto it = nodeDataMap.find(nodeName);
-    if (it != nodeDataMap.end() && it->second.online)
+    std::lock_guard<std::mutex> lock(map_mutex);
+    auto it = node_data_map.find(node_name);
+    if (it != node_data_map.end() && it->second.online)
     {
-        return it->second.hexID;
+        return it->second.hex_id;
     }
     else
     {
@@ -178,12 +153,12 @@ std::string getRNSHexID(const std::string &nodeName)
 }
 
 // Function to print all node statuses
-void printNodeStatuses(quill::Logger *logger)
+void print_node_statuses(quill::Logger *logger)
 {
-    std::lock_guard<std::mutex> lock(mapMutex);
-    for (const auto &pair : nodeDataMap)
+    std::lock_guard<std::mutex> lock(map_mutex);
+    for (const auto &pair : node_data_map)
     {
         const RNSData &data = pair.second;
-        LOG_INFO(logger, "Node: {} - HexID: {} - RoutingID: {} - Online: {}", data.name, data.hexID, data.routingID, data.online);
+        LOG_INFO(logger, "Node: {} - HexID: {} - RoutingID: {} - Online: {}", data.name, data.hex_id, data.routing_id, data.online);
     }
 }

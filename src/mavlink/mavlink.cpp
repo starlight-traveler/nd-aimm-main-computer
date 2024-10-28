@@ -2,20 +2,21 @@
 #include "mavlink_dameon.h"
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/plugins/telemetry/telemetry.h>
+#include <mavsdk/connection_result.h>
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-// Use the mavsdk and standard namespaces
+// Use the mavsdk namespace
 using namespace mavsdk;
 
 void mavlink_dameon(quill::Logger *logger)
 {
-    // Create a Mavsdk instance
-    Mavsdk mavsdk;
+    // Create a Mavsdk instance with the GroundStation configuration
+    Mavsdk mavsdk{Mavsdk::Configuration{Mavsdk::ComponentType::CompanionComputer}};
 
     // Set the connection URL for your Pixhawk
-    std::string connection_url = "serial:///dev/ttyUSB0:57600";
+    std::string connection_url = "serial:///dev/tty.usbmodem2101:115200";
     // For Windows, you might use: "serial://COM3:115200"
     // For UDP connection: "udp://:14540"
 
@@ -23,7 +24,7 @@ void mavlink_dameon(quill::Logger *logger)
     ConnectionResult connection_result = mavsdk.add_any_connection(connection_url);
     if (connection_result != ConnectionResult::Success)
     {
-        LOG_ERROR(logger, "Connection failed: {}", connection_result_str(connection_result));
+        LOG_ERROR(logger, "Connection failed");
         return;
     }
 
@@ -39,8 +40,8 @@ void mavlink_dameon(quill::Logger *logger)
         auto systems = mavsdk.systems();
         system = systems.back();
 
-        if (system->has_autopilot()) {
-            LOG_INFO(logger, "Discovered autopilot");
+        if (system->is_connected()) {
+            LOG_INFO(logger, "Discovered system");
             discovered_system = true;
         } });
 
@@ -62,15 +63,12 @@ void mavlink_dameon(quill::Logger *logger)
     // Create a Telemetry plugin instance
     Telemetry telemetry{system};
 
-    // Subscribe to heartbeat messages
-    telemetry.subscribe_heartbeat([logger](Telemetry::Heartbeat heartbeat)
-                                  { LOG_INFO(logger, "Received heartbeat: base_mode={}, custom_mode={}, system_status={}",
-                                                 static_cast<int>(heartbeat.base_mode),
-                                                 heartbeat.custom_mode,
-                                                 static_cast<int>(heartbeat.system_status)); });
+    // Subscribe to armed messages as a substitute for heartbeats
+    telemetry.subscribe_armed([logger](bool armed)
+                              { LOG_INFO(logger, "Vehicle armed state changed: {}", armed ? "ARMED" : "DISARMED"); });
 
-    // Keep the program running to receive heartbeats
-    LOG_INFO(logger, "Started receiving heartbeats...");
+    // Keep the program running to receive telemetry
+    LOG_INFO(logger, "Started receiving telemetry...");
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    LOG_INFO(logger, "Finished receiving heartbeats.");
+    LOG_INFO(logger, "Finished receiving telemetry.");
 }
