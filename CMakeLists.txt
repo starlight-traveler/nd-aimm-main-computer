@@ -227,7 +227,7 @@ add_subdirectory(
     ${CMAKE_CURRENT_LIST_DIR}/lib/eventbus/lib
 )
 
-# Add the eventbus library
+# Add the process library
 add_subdirectory(
     ${CMAKE_CURRENT_LIST_DIR}/lib/subprocess
 )
